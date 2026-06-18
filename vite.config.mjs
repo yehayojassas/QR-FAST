@@ -16,6 +16,7 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL("index.html", import.meta.url)),
         table7: fileURLToPath(new URL("table7.html", import.meta.url)),
+        staff: fileURLToPath(new URL("staff.html", import.meta.url)),
       },
     },
   },

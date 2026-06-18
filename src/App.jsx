@@ -14,6 +14,7 @@ const FALLBACK_PRODUCTS = [
 
 const CATEGORIES = ['À partager', 'Plats', 'Salades', 'Pâtes', 'Enfants', 'Desserts', 'Vins', 'Bières', 'Boissons', 'Cocktails', 'Spiritueux'];
 const money = (value) => `${value.toFixed(2)} CHF`;
+const TABLE = new URLSearchParams(window.location.search).get('table') || '7';
 
 const EXACT_IMAGES = {
   'Nachos à partager': '/products/nachos.png',
@@ -80,6 +81,7 @@ export function App() {
   const [selected, setSelected] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [orderStatus, setOrderStatus] = useState('draft');
+  const [orderId, setOrderId] = useState(null);
   const [toast, setToast] = useState('');
   const [rotation, setRotation] = useState(0);
   const dragStart = useRef(null);
@@ -132,20 +134,48 @@ export function App() {
     });
   }
 
-  function sendOrder() {
+  async function sendOrder() {
     if (!itemCount) return;
     setOrderStatus('pending');
     setCartOpen(false);
     flash('Commande envoyée aux serveurs');
-    window.setTimeout(() => {
-      setOrderStatus('accepted');
-      flash('Votre commande a été prise en charge');
-    }, 2600);
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table: TABLE,
+          total,
+          items: lines.map((line) => ({ name: line.name, price: line.price, quantity: line.quantity, size: line.size || '' })),
+        }),
+      });
+      if (!response.ok) throw new Error('send failed');
+      const data = await response.json();
+      setOrderId(data.id);
+    } catch {
+      setOrderStatus('draft');
+      setCartOpen(true);
+      flash('Échec de l’envoi, réessayez');
+    }
   }
 
+  // Suit en direct le statut de la commande envoyée (acceptée / refusée par un serveur)
+  useEffect(() => {
+    if (!orderId) return undefined;
+    const source = new EventSource('/api/stream');
+    source.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'order' && message.order.id === orderId) {
+        if (message.order.status === 'accepted') { setOrderStatus('accepted'); flash('Votre commande a été acceptée'); }
+        if (message.order.status === 'rejected') { setOrderStatus('rejected'); }
+      }
+    };
+    return () => source.close();
+  }, [orderId]);
+
   function resetDemo() {
-    setCart({});
     setOrderStatus('draft');
+    setOrderId(null);
     setCartOpen(false);
     setSelected(null);
   }
@@ -154,7 +184,7 @@ export function App() {
     <div className="app-shell">
       <header className="demo-header">
         <button className="brand" aria-label="Accueil ClickOne"><span>C.O</span></button>
-        <button className="table-pill">Table 7 <span>⌄</span></button>
+        <button className="table-pill">Table {TABLE} <span>⌄</span></button>
       </header>
 
       <main className="client-view">
@@ -180,7 +210,7 @@ export function App() {
       </div>}
 
       {cartOpen && <div className="overlay" role="dialog" aria-modal="true" aria-label="Votre commande"><button className="overlay-backdrop" onClick={() => setCartOpen(false)} aria-label="Fermer" /><section className="cart-sheet">
-        <div className="sheet-topline"><div><p className="eyebrow">Table 7</p><h2>Votre commande</h2></div><button className="icon-button" onClick={() => setCartOpen(false)} aria-label="Fermer"><X size={22} /></button></div>
+        <div className="sheet-topline"><div><p className="eyebrow">Table {TABLE}</p><h2>Votre commande</h2></div><button className="icon-button" onClick={() => setCartOpen(false)} aria-label="Fermer"><X size={22} /></button></div>
         <div className="cart-lines">{lines.map((line) => <div className="cart-line" key={line.id}><img src={line.image} alt="" /><div><strong>{line.name}</strong><span>{money(line.price)}</span></div><div className="mini-stepper"><button onClick={() => changeQuantity(line, -1)} aria-label="Retirer">{line.quantity === 1 ? <Trash /> : <Minus />}</button><strong>{line.quantity}</strong><button onClick={() => changeQuantity(line, 1)} aria-label="Ajouter"><Plus /></button></div></div>)}</div>
         <div className="cart-total"><span>Total</span><strong>{money(total)}</strong></div><button className="send-button" onClick={sendOrder}><BellRinging size={22} weight="fill" /> Envoyer aux serveurs</button><p className="payment-note">Aucun paiement maintenant. Vous réglerez en partant.</p>
       </section></div>}

@@ -1,14 +1,14 @@
 # Configuration de déploiement Render (https://render.com)
-# Site statique : Render installe les dépendances, construit le menu avec Vite,
-# puis publie le dossier "dist". Le menu sera servi à la racine et la page QR
-# de la table sera disponible sur /table7.html
+# Web Service Node : Render installe les dépendances, construit le front (Vite),
+# puis lance le serveur Node (server.js) qui sert le menu, la page serveurs
+# et l'API temps réel des commandes.
 services:
   - type: web
     name: clickone-menu
-    runtime: static
+    runtime: node
+    plan: free
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    pullRequestPreviewsEnabled: false
+    startCommand: node server.js
     envVars:
       - key: NODE_VERSION
         value: "20"
