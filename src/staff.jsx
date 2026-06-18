@@ -1,11 +1,40 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BellRinging, CheckCircle, Clock, XCircle } from "@phosphor-icons/react";
+import { BellRinging, CheckCircle, Clock, Gear, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
 const formatTime = (ms) =>
   new Date(ms).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+
+// Adresse du "cerveau" des commandes (le service du menu).
+// Priorité : ?api=... dans l'URL → mémorisé → injecté au build (Render) → même origine.
+function resolveApiBase() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("api");
+  if (fromUrl) {
+    localStorage.setItem("clickone_api", fromUrl);
+  }
+  const stored = fromUrl || localStorage.getItem("clickone_api");
+  const fromBuild = import.meta.env.VITE_API_BASE;
+  let base = stored
+    || (fromBuild ? (/^https?:/.test(fromBuild) ? fromBuild : `https://${fromBuild}`) : "")
+    || window.location.origin;
+  return base.replace(/\/$/, "");
+}
+const API_BASE = resolveApiBase();
+
+function configureMenuAddress() {
+  const current = localStorage.getItem("clickone_api") || "";
+  const value = window.prompt(
+    "Adresse du menu (le service ClickOne), ex: https://clickone-menu.onrender.com",
+    current,
+  );
+  if (value) {
+    localStorage.setItem("clickone_api", value.trim().replace(/\/$/, ""));
+    window.location.reload();
+  }
+}
 
 function StaffApp() {
   const [orders, setOrders] = useState([]);
@@ -13,7 +42,7 @@ function StaffApp() {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    const source = new EventSource("/api/stream");
+    const source = new EventSource(`${API_BASE}/api/stream`);
     source.onopen = () => setConnected(true);
     source.onerror = () => setConnected(false);
     source.onmessage = (event) => {
@@ -53,7 +82,7 @@ function StaffApp() {
 
   async function act(id, action) {
     try {
-      await fetch(`/api/orders/${id}/${action}`, { method: "POST" });
+      await fetch(`${API_BASE}/api/orders/${id}/${action}`, { method: "POST" });
     } catch {
       /* ignoré : le flux temps réel resynchronise l'état */
     }
@@ -69,10 +98,15 @@ function StaffApp() {
     <div className="staff-view">
       <div className="staff-title">
         <h1>Commandes</h1>
-        <span className={`live-pill ${pending.length ? "ringing" : ""}`}>
-          <span />
-          {connected ? (pending.length ? `${pending.length} en attente` : "En ligne") : "Connexion…"}
-        </span>
+        <div className="staff-title-right">
+          <span className={`live-pill ${pending.length ? "ringing" : ""}`}>
+            <span />
+            {connected ? (pending.length ? `${pending.length} en attente` : "En ligne") : "Connexion…"}
+          </span>
+          <button className="staff-settings" onClick={configureMenuAddress} aria-label="Configurer l'adresse du menu" title="Configurer l'adresse du menu">
+            <Gear size={20} />
+          </button>
+        </div>
       </div>
 
       {!pending.length && (

@@ -8,6 +8,16 @@ const DIST = join(__dirname, "dist");
 const app = express();
 app.use(express.json());
 
+// CORS : autorise la page serveurs (hébergée sur une autre adresse) à
+// communiquer avec le cerveau des commandes.
+app.use((req, res, next) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  return next();
+});
+
 // --- Stockage des commandes en mémoire ---
 // Suffisant pour le service en direct. Les commandes sont remises à zéro
 // si le serveur redémarre (mise en veille Render après inactivité).

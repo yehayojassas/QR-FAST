@@ -1,7 +1,12 @@
-# Configuration de déploiement Render (https://render.com)
-# Web Service Node : Render installe les dépendances, construit le front (Vite),
-# puis lance le serveur Node (server.js) qui sert le menu, la page serveurs
-# et l'API temps réel des commandes.
+# Déploiement Render — DEUX services reliés (https://render.com)
+#
+#  1) clickone-menu     : Web Service Node. Sert le menu client + l'API/cerveau
+#                         des commandes (temps réel). C'est ce lien que vise le QR.
+#  2) clickone-serveurs : Site statique sur une ADRESSE SÉPARÉE, dédié aux serveurs.
+#                         Il se connecte automatiquement au cerveau du service 1
+#                         (adresse injectée au build via VITE_API_BASE).
+#
+# Déploiement : Render → New + → Blueprint → choisir ce dépôt → Apply.
 services:
   - type: web
     name: clickone-menu
@@ -12,3 +17,24 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
+
+  - type: web
+    name: clickone-serveurs
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      # La racine du site serveurs ouvre directement la page serveurs.
+      - type: rewrite
+        source: /
+        destination: /staff.html
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Adresse du cerveau des commandes, récupérée automatiquement
+      # depuis le service du menu.
+      - key: VITE_API_BASE
+        fromService:
+          type: web
+          name: clickone-menu
+          property: host
