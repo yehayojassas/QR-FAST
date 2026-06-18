@@ -80,11 +80,12 @@ export function App() {
   const [cart, setCart] = useState({});
   const [selected, setSelected] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [orderStatus, setOrderStatus] = useState('draft');
-  const [orderId, setOrderId] = useState(null);
+  const [myOrders, setMyOrders] = useState([]); // commandes envoyées par ce client { id, status }
   const [toast, setToast] = useState('');
   const [rotation, setRotation] = useState(0);
   const dragStart = useRef(null);
+  const myOrdersRef = useRef([]);
+  useEffect(() => { myOrdersRef.current = myOrders; }, [myOrders]);
 
   useEffect(() => {
     fetch('/menu.csv').then((response) => response.text()).then((text) => {
@@ -119,7 +120,6 @@ export function App() {
   }
 
   function add(product) {
-    if (orderStatus !== 'draft') return;
     setCart((current) => ({ ...current, [product.id]: (current[product.id] || 0) + 1 }));
     flash(`${product.name} ajouté`);
   }
@@ -136,59 +136,41 @@ export function App() {
 
   async function sendOrder() {
     if (!itemCount) return;
-    setOrderStatus('pending');
+    // On capture la commande puis on vide le panier : le client peut
+    // immédiatement composer et envoyer une nouvelle commande.
+    const items = lines.map((line) => ({ name: line.name, price: line.price, quantity: line.quantity, size: line.size || '' }));
+    const orderTotal = total;
+    setCart({});
     setCartOpen(false);
     flash('Commande envoyée aux serveurs');
     try {
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          table: TABLE,
-          total,
-          items: lines.map((line) => ({ name: line.name, price: line.price, quantity: line.quantity, size: line.size || '' })),
-        }),
+        body: JSON.stringify({ table: TABLE, total: orderTotal, items }),
       });
       if (!response.ok) throw new Error('send failed');
       const data = await response.json();
-      setOrderId(data.id);
+      setMyOrders((current) => [...current, { id: data.id, status: 'pending' }]);
     } catch {
-      setOrderStatus('draft');
-      setCartOpen(true);
       flash('Échec de l’envoi, réessayez');
     }
   }
 
-  // Suit en direct le statut de la commande envoyée (acceptée / refusée par un serveur)
+  // Suit en direct le statut de TOUTES les commandes envoyées par ce client.
   useEffect(() => {
-    if (!orderId) return undefined;
     const source = new EventSource('/api/stream');
     source.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      if (message.type === 'order' && message.order.id === orderId) {
-        if (message.order.status === 'accepted') { setOrderStatus('accepted'); flash('Votre commande a été acceptée'); }
-        if (message.order.status === 'rejected') { setOrderStatus('rejected'); }
-      }
+      if (message.type !== 'order') return;
+      const mine = myOrdersRef.current.find((order) => order.id === message.order.id);
+      if (!mine || mine.status === message.order.status) return;
+      if (message.order.status === 'accepted') flash('Votre commande a été acceptée ✅');
+      if (message.order.status === 'rejected') flash('Une commande a été refusée');
+      setMyOrders((current) => current.map((order) => (order.id === message.order.id ? { ...order, status: message.order.status } : order)));
     };
     return () => source.close();
-  }, [orderId]);
-
-  // Repart sur une commande vierge (sans recharger la page).
-  function newOrder() {
-    setCart({});
-    setOrderStatus('draft');
-    setOrderId(null);
-    setCartOpen(false);
-    setSelected(null);
-  }
-
-  // Après un refus : garde les articles pour pouvoir ajuster et renvoyer.
-  function resetDemo() {
-    setOrderStatus('draft');
-    setOrderId(null);
-    setCartOpen(false);
-    setSelected(null);
-  }
+  }, []);
 
   return (
     <div className="app-shell">
@@ -198,7 +180,7 @@ export function App() {
       </header>
 
       <main className="client-view">
-        {orderStatus !== 'draft' && <OrderStatus status={orderStatus} onReset={resetDemo} onNew={newOrder} />}
+        {myOrders.length > 0 && <OrdersBanner orders={myOrders} onDismiss={() => setMyOrders([])} />}
         <div className="search-row"><label className="search-box"><MagnifyingGlass size={24} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un plat, ingrédient…" />{search && <button onClick={() => setSearch('')} aria-label="Effacer"><X size={18} /></button>}</label><button className="filter-button" aria-label="Filtres"><SlidersHorizontal size={25} /></button></div>
         <nav className="category-strip" aria-label="Catégories">{CATEGORIES.map((item) => <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>)}</nav>
         <section className="product-grid" aria-label="Produits">{visibleProducts.map((product) => <article className="product" key={product.id}>
@@ -206,7 +188,7 @@ export function App() {
           <div className="product-copy"><button onClick={() => { setSelected(product); setRotation(0); }}><h2>{product.name}</h2></button>{product.size && <span className="product-size">{product.size}</span>}<div className="product-line"><span>{money(product.price)}</span>{cart[product.id] ? <div className="mini-stepper"><button onClick={() => changeQuantity(product, -1)} aria-label="Retirer"><Minus /></button><strong>{cart[product.id]}</strong><button onClick={() => changeQuantity(product, 1)} aria-label="Ajouter"><Plus /></button></div> : <button className="quick-add" onClick={() => add(product)} aria-label={`Ajouter ${product.name}`}><Plus weight="bold" /></button>}</div></div>
         </article>)}</section>
         {!visibleProducts.length && <div className="empty-state">Aucun produit ne correspond à votre recherche.</div>}
-        {itemCount > 0 && orderStatus === 'draft' && <button className="cart-bar" onClick={() => setCartOpen(true)}><span className="cart-count">{itemCount}</span><span>Voir ma commande</span><strong>{money(total)}</strong></button>}
+        {itemCount > 0 && <button className="cart-bar" onClick={() => setCartOpen(true)}><span className="cart-count">{itemCount}</span><span>Voir ma commande</span><strong>{money(total)}</strong></button>}
       </main>
 
       {selected && <div className="overlay" role="dialog" aria-modal="true" aria-label={selected.name}>
@@ -215,7 +197,7 @@ export function App() {
           <div className="rotate-stage" onPointerDown={(event) => { dragStart.current = { x: event.clientX, rotation }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (dragStart.current) setRotation(dragStart.current.rotation + (event.clientX - dragStart.current.x) * .7); }} onPointerUp={() => { dragStart.current = null; }}>
             <img src={selected.image} alt={selected.name} style={{ transform: `perspective(800px) rotateY(${rotation}deg)` }} draggable="false" /><p>Glissez pour tourner le plat</p>
           </div>
-          <div className="sheet-copy"><p className="eyebrow">{selected.sourceCategory || selected.category}</p><h2>{selected.name}</h2><p>{selected.description}{selected.size ? ` · ${selected.size}` : ''}</p><div className="sheet-action"><strong>{money(selected.price)}</strong><button className="primary-button" onClick={() => { add(selected); setSelected(null); }} disabled={orderStatus !== 'draft'}><Plus size={20} weight="bold" /> Ajouter</button></div></div>
+          <div className="sheet-copy"><p className="eyebrow">{selected.sourceCategory || selected.category}</p><h2>{selected.name}</h2><p>{selected.description}{selected.size ? ` · ${selected.size}` : ''}</p><div className="sheet-action"><strong>{money(selected.price)}</strong><button className="primary-button" onClick={() => { add(selected); setSelected(null); }}><Plus size={20} weight="bold" /> Ajouter</button></div></div>
         </section>
       </div>}
 
@@ -229,7 +211,27 @@ export function App() {
   );
 }
 
-function OrderStatus({ status, onReset, onNew }) {
-  const data = { pending: [<Clock weight="fill" />, 'Commande envoyée', 'Un serveur va confirmer votre commande.'], accepted: [<CheckCircle weight="fill" />, 'Votre commande est prise !', 'Vous pouvez commander à nouveau quand vous voulez.'], rejected: [<XCircle weight="fill" />, 'Commande non disponible', 'Veuillez modifier votre sélection ou appeler un serveur.'] }[status];
-  return <section className={`status-banner ${status}`}><div className="status-icon">{data[0]}</div><div><strong>{data[1]}</strong><span>{data[2]}</span></div>{status === 'accepted' && <button onClick={onNew}>Nouvelle commande</button>}{status === 'rejected' && <button onClick={onReset}>Recommencer</button>}</section>;
+function OrdersBanner({ orders, onDismiss }) {
+  const pending = orders.filter((order) => order.status === 'pending').length;
+  let status;
+  let title;
+  let sub;
+  if (pending > 0) {
+    status = 'pending';
+    title = pending > 1 ? `${pending} commandes envoyées` : 'Commande envoyée';
+    sub = 'En attente de validation. Vous pouvez déjà en envoyer une autre.';
+  } else {
+    const last = orders[orders.length - 1];
+    if (last.status === 'accepted') {
+      status = 'accepted';
+      title = 'Commande acceptée !';
+      sub = 'Vous pouvez commander à nouveau quand vous voulez.';
+    } else {
+      status = 'rejected';
+      title = 'Commande refusée';
+      sub = 'Vous pouvez recommander ou appeler un serveur.';
+    }
+  }
+  const icon = { pending: <Clock weight="fill" />, accepted: <CheckCircle weight="fill" />, rejected: <XCircle weight="fill" /> }[status];
+  return <section className={`status-banner ${status}`}><div className="status-icon">{icon}</div><div><strong>{title}</strong><span>{sub}</span></div><button onClick={onDismiss} aria-label="Fermer"><X size={18} /></button></section>;
 }
