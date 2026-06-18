@@ -14,7 +14,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: fileURLToPath(new URL("index.html", import.meta.url)),
+        // index.html = page serveurs (racine du site clickone-serveurs)
+        index: fileURLToPath(new URL("index.html", import.meta.url)),
+        // menu.html = menu client (servi par clickone-menu)
+        menu: fileURLToPath(new URL("menu.html", import.meta.url)),
         table7: fileURLToPath(new URL("table7.html", import.meta.url)),
         staff: fileURLToPath(new URL("staff.html", import.meta.url)),
       },

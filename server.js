@@ -93,10 +93,12 @@ app.post("/api/orders/:id/reject", (req, res) => updateStatus(req, res, "rejecte
 app.get("/api/orders", (_req, res) => res.json([...orders.values()]));
 
 // --- Pages ---
+// Ce service (clickone-menu) sert le MENU CLIENT à sa racine.
+app.get("/", (_req, res) => res.sendFile(join(DIST, "menu.html")));
 app.get("/staff", (_req, res) => res.sendFile(join(DIST, "staff.html")));
-app.use(express.static(DIST));
-// Toute autre route renvoie le menu (page d'accueil).
-app.get(/.*/, (_req, res) => res.sendFile(join(DIST, "index.html")));
+app.use(express.static(DIST, { index: false }));
+// Toute autre route renvoie le menu client.
+app.get(/.*/, (_req, res) => res.sendFile(join(DIST, "menu.html")));
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`ClickOne en écoute sur le port ${port}`));

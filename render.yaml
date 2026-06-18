@@ -21,9 +21,9 @@ services:
   - type: web
     name: clickone-serveurs
     runtime: static
-    # On remplace la page d'accueil par la page serveurs : ainsi la racine
-    # de ce site ouvre directement les commandes (et non le menu client).
-    buildCommand: npm install && npm run build && cp dist/staff.html dist/index.html
+    # index.html EST la page serveurs : la racine de ce site ouvre
+    # directement les commandes (et non le menu client).
+    buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:
       - key: NODE_VERSION
