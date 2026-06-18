@@ -173,6 +173,16 @@ export function App() {
     return () => source.close();
   }, [orderId]);
 
+  // Repart sur une commande vierge (sans recharger la page).
+  function newOrder() {
+    setCart({});
+    setOrderStatus('draft');
+    setOrderId(null);
+    setCartOpen(false);
+    setSelected(null);
+  }
+
+  // Après un refus : garde les articles pour pouvoir ajuster et renvoyer.
   function resetDemo() {
     setOrderStatus('draft');
     setOrderId(null);
@@ -188,7 +198,7 @@ export function App() {
       </header>
 
       <main className="client-view">
-        {orderStatus !== 'draft' && <OrderStatus status={orderStatus} onReset={resetDemo} />}
+        {orderStatus !== 'draft' && <OrderStatus status={orderStatus} onReset={resetDemo} onNew={newOrder} />}
         <div className="search-row"><label className="search-box"><MagnifyingGlass size={24} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un plat, ingrédient…" />{search && <button onClick={() => setSearch('')} aria-label="Effacer"><X size={18} /></button>}</label><button className="filter-button" aria-label="Filtres"><SlidersHorizontal size={25} /></button></div>
         <nav className="category-strip" aria-label="Catégories">{CATEGORIES.map((item) => <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>)}</nav>
         <section className="product-grid" aria-label="Produits">{visibleProducts.map((product) => <article className="product" key={product.id}>
@@ -219,7 +229,7 @@ export function App() {
   );
 }
 
-function OrderStatus({ status, onReset }) {
-  const data = { pending: [<Clock weight="fill" />, 'Commande envoyée', 'Un serveur va confirmer votre commande.'], accepted: [<CheckCircle weight="fill" />, 'Votre commande est prise !', 'Le ticket vient d’être envoyé au bar.'], rejected: [<XCircle weight="fill" />, 'Commande non disponible', 'Veuillez modifier votre sélection ou appeler un serveur.'] }[status];
-  return <section className={`status-banner ${status}`}><div className="status-icon">{data[0]}</div><div><strong>{data[1]}</strong><span>{data[2]}</span></div>{status === 'rejected' && <button onClick={onReset}>Recommencer</button>}</section>;
+function OrderStatus({ status, onReset, onNew }) {
+  const data = { pending: [<Clock weight="fill" />, 'Commande envoyée', 'Un serveur va confirmer votre commande.'], accepted: [<CheckCircle weight="fill" />, 'Votre commande est prise !', 'Vous pouvez commander à nouveau quand vous voulez.'], rejected: [<XCircle weight="fill" />, 'Commande non disponible', 'Veuillez modifier votre sélection ou appeler un serveur.'] }[status];
+  return <section className={`status-banner ${status}`}><div className="status-icon">{data[0]}</div><div><strong>{data[1]}</strong><span>{data[2]}</span></div>{status === 'accepted' && <button onClick={onNew}>Nouvelle commande</button>}{status === 'rejected' && <button onClick={onReset}>Recommencer</button>}</section>;
 }
