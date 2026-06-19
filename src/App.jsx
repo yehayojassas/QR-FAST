@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BellRinging, CheckCircle, Clock, MagnifyingGlass, Minus, Plus, SlidersHorizontal, Sparkle, Trash, X, XCircle } from '@phosphor-icons/react';
+import { ArrowLeft, BellRinging, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, X, XCircle } from '@phosphor-icons/react';
 
 const FALLBACK_PRODUCTS = [
   { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/nachos.png', description: 'Sauce mexicaine fraîche maison' },
@@ -185,7 +185,6 @@ export function App() {
 
       <main className="client-view">
         {myOrders.length > 0 && <OrdersBanner orders={myOrders} onDismiss={() => setMyOrders([])} />}
-        <div className="search-row"><label className="search-box"><MagnifyingGlass size={24} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un plat, ingrédient…" />{search && <button onClick={() => setSearch('')} aria-label="Effacer"><X size={18} /></button>}</label><button className="filter-button" aria-label="Filtres"><SlidersHorizontal size={25} /></button></div>
         <nav className="category-strip" aria-label="Catégories">{CATEGORIES.map((item) => <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>)}</nav>
         <section className="product-grid" aria-label="Produits">{visibleProducts.map((product) => <article className="product" key={product.id}>
           <button className="product-visual" onClick={() => { setSelected(product); setRotation(0); }} aria-label={`Voir ${product.name} en 360 degrés`}><img src={product.image} alt={product.name} /><span className="view-360"><Sparkle size={14} weight="fill" /> 360°</span></button>
