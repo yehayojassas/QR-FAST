@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BellRinging, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, X, XCircle } from '@phosphor-icons/react';
+import { ArrowLeft, BellRinging, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, X } from '@phosphor-icons/react';
 
 const FALLBACK_PRODUCTS = [
   { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/nachos.png', description: 'Sauce mexicaine fraîche maison' },
@@ -15,6 +15,15 @@ const FALLBACK_PRODUCTS = [
 const CATEGORIES = ['À partager', 'Plats', 'Salades', 'Pâtes', 'Enfants', 'Desserts', 'Vins', 'Bières', 'Boissons', 'Cocktails', 'Spiritueux'];
 const money = (value) => `${value.toFixed(2)} CHF`;
 const TABLE = new URLSearchParams(window.location.search).get('table') || '7';
+
+const ORDER_LIMIT = 5;     // au-delà de 5 commandes ouvertes, on fait patienter
+const WAIT_SECONDS = 30;   // durée du compte à rebours d'envoi quand c'est saturé
+const CART_KEY = `clickone:cart:${TABLE}`;
+const ORDERS_KEY = `clickone:orders:${TABLE}`;
+const loadStored = (key, fallback) => {
+  try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch { return fallback; }
+};
 
 const EXACT_IMAGES = {
   'Nachos à partager': '/products/nachos.png',
@@ -78,15 +87,21 @@ export function App() {
   const [products, setProducts] = useState(FALLBACK_PRODUCTS);
   const [category, setCategory] = useState('À partager');
   const [search, setSearch] = useState('');
-  const [cart, setCart] = useState({});
+  const [cart, setCart] = useState(() => loadStored(CART_KEY, {}));
   const [selected, setSelected] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [myOrders, setMyOrders] = useState([]); // commandes envoyées par ce client { id, status }
+  const [myOrders, setMyOrders] = useState(() => loadStored(ORDERS_KEY, [])); // { id, status }, persistées
   const [toast, setToast] = useState('');
   const [rotation, setRotation] = useState(0);
+  const [openCount, setOpenCount] = useState(0);   // nombre de commandes ouvertes côté serveur
+  const [countdown, setCountdown] = useState(0);    // secondes restantes avant envoi auto (0 = inactif)
+  const allOrdersRef = useRef(new Map());           // id -> statut (toutes les commandes)
+  const queuedRef = useRef(null);                   // commande capturée en attente d'envoi
   const dragStart = useRef(null);
   const myOrdersRef = useRef([]);
   useEffect(() => { myOrdersRef.current = myOrders; }, [myOrders]);
+  useEffect(() => { try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* stockage indisponible */ } }, [cart]);
+  useEffect(() => { try { localStorage.setItem(ORDERS_KEY, JSON.stringify(myOrders)); } catch { /* stockage indisponible */ } }, [myOrders]);
 
   useEffect(() => {
     Promise.all([
@@ -138,12 +153,14 @@ export function App() {
     });
   }
 
-  async function sendOrder() {
-    if (!itemCount) return;
-    // On capture la commande puis on vide le panier : le client peut
-    // immédiatement composer et envoyer une nouvelle commande.
-    const items = lines.map((line) => ({ name: line.name, price: line.price, quantity: line.quantity, size: line.size || '' }));
-    const orderTotal = total;
+  function recomputeOpen() {
+    let count = 0;
+    for (const status of allOrdersRef.current.values()) if (status === 'pending') count += 1;
+    setOpenCount(count);
+  }
+
+  // Envoi réel d'une commande déjà capturée (payload figé).
+  async function submitOrder(payload) {
     setCart({});
     setCartOpen(false);
     flash('Commande envoyée aux serveurs');
@@ -151,7 +168,7 @@ export function App() {
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table: TABLE, total: orderTotal, items }),
+        body: JSON.stringify({ table: TABLE, total: payload.total, items: payload.items }),
       });
       if (!response.ok) throw new Error('send failed');
       const data = await response.json();
@@ -161,17 +178,82 @@ export function App() {
     }
   }
 
-  // Suit en direct le statut de TOUTES les commandes envoyées par ce client.
+  function sendOrder() {
+    if (!itemCount || countdown > 0) return;
+    const payload = {
+      total,
+      items: lines.map((line) => ({ name: line.name, price: line.price, quantity: line.quantity, size: line.size || '' })),
+    };
+    // Service saturé (≥ ORDER_LIMIT commandes ouvertes) : on impose une attente.
+    if (openCount >= ORDER_LIMIT) {
+      queuedRef.current = payload;
+      setCartOpen(false);
+      setCountdown(WAIT_SECONDS);
+      flash(`Trop de commandes en cours · envoi dans ${WAIT_SECONDS}s`);
+    } else {
+      submitOrder(payload);
+    }
+  }
+
+  // Compte à rebours : à 0, la commande en attente part automatiquement.
+  useEffect(() => {
+    if (countdown <= 0) {
+      if (queuedRef.current) {
+        const payload = queuedRef.current;
+        queuedRef.current = null;
+        submitOrder(payload);
+      }
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setCountdown((value) => value - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [countdown]);
+
+  // Suit en direct le statut des commandes de ce client + le nombre de
+  // commandes ouvertes côté serveur (pour le rythme d'envoi).
   useEffect(() => {
     const source = new EventSource('/api/stream');
     source.onmessage = (event) => {
       const message = JSON.parse(event.data);
+
+      // À la connexion (ou reconnexion) : état réel complet du serveur.
+      if (message.type === 'snapshot') {
+        allOrdersRef.current = new Map(message.orders.map((order) => [order.id, order.status]));
+        recomputeOpen();
+        // Réconcilie mes commandes persistées avec la réalité du serveur.
+        const mine = myOrdersRef.current;
+        if (mine.length) {
+          const known = allOrdersRef.current;
+          let accepted = false; let rejected = false;
+          const still = [];
+          for (const order of mine) {
+            const status = known.get(order.id);
+            if (status === undefined) continue;          // commande perdue (serveur redémarré)
+            if (status === 'accepted') { accepted = true; continue; }
+            if (status === 'rejected') { rejected = true; continue; }
+            still.push({ id: order.id, status: 'pending' });
+          }
+          if (accepted) flash('Votre commande a été acceptée ✅');
+          else if (rejected) flash('Votre commande a été refusée');
+          setMyOrders(still);
+        }
+        return;
+      }
+
       if (message.type !== 'order') return;
-      const mine = myOrdersRef.current.find((order) => order.id === message.order.id);
-      if (!mine || mine.status === message.order.status) return;
-      if (message.order.status === 'accepted') flash('Votre commande a été acceptée ✅');
-      if (message.order.status === 'rejected') flash('Une commande a été refusée');
-      setMyOrders((current) => current.map((order) => (order.id === message.order.id ? { ...order, status: message.order.status } : order)));
+      const { order } = message;
+      allOrdersRef.current.set(order.id, order.status);
+      recomputeOpen();
+      const mine = myOrdersRef.current.find((entry) => entry.id === order.id);
+      if (!mine) return;
+      // Dès acceptation/refus : on notifie puis la commande disparaît.
+      if (order.status === 'accepted') {
+        flash('Votre commande a été acceptée ✅');
+        setMyOrders((current) => current.filter((entry) => entry.id !== order.id));
+      } else if (order.status === 'rejected') {
+        flash('Votre commande a été refusée');
+        setMyOrders((current) => current.filter((entry) => entry.id !== order.id));
+      }
     };
     return () => source.close();
   }, []);
@@ -184,7 +266,8 @@ export function App() {
       </header>
 
       <main className="client-view">
-        {myOrders.length > 0 && <OrdersBanner orders={myOrders} onDismiss={() => setMyOrders([])} />}
+        {countdown > 0 && <section className="status-banner pending"><div className="status-icon"><Clock weight="fill" /></div><div><strong>Trop de commandes en cours</strong><span>Votre commande part automatiquement dans {countdown}s…</span></div></section>}
+        {myOrders.length > 0 && <OrdersBanner orders={myOrders} />}
         <nav className="category-strip" aria-label="Catégories">{CATEGORIES.map((item) => <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>)}</nav>
         <section className="product-grid" aria-label="Produits">{visibleProducts.map((product) => <article className="product" key={product.id}>
           <button className="product-visual" onClick={() => { setSelected(product); setRotation(0); }} aria-label={`Voir ${product.name} en 360 degrés`}><img src={product.image} alt={product.name} /><span className="view-360"><Sparkle size={14} weight="fill" /> 360°</span></button>
@@ -207,34 +290,18 @@ export function App() {
       {cartOpen && <div className="overlay" role="dialog" aria-modal="true" aria-label="Votre commande"><button className="overlay-backdrop" onClick={() => setCartOpen(false)} aria-label="Fermer" /><section className="cart-sheet">
         <div className="sheet-topline"><div><p className="eyebrow">Table {TABLE}</p><h2>Votre commande</h2></div><button className="icon-button" onClick={() => setCartOpen(false)} aria-label="Fermer"><X size={22} /></button></div>
         <div className="cart-lines">{lines.map((line) => <div className="cart-line" key={line.id}><img src={line.image} alt="" /><div><strong>{line.name}</strong><span>{money(line.price)}</span></div><div className="mini-stepper"><button onClick={() => changeQuantity(line, -1)} aria-label="Retirer">{line.quantity === 1 ? <Trash /> : <Minus />}</button><strong>{line.quantity}</strong><button onClick={() => changeQuantity(line, 1)} aria-label="Ajouter"><Plus /></button></div></div>)}</div>
-        <div className="cart-total"><span>Total</span><strong>{money(total)}</strong></div><button className="send-button" onClick={sendOrder}><BellRinging size={22} weight="fill" /> Envoyer aux serveurs</button><p className="payment-note">Aucun paiement maintenant. Vous réglerez en partant.</p>
+        <div className="cart-total"><span>Total</span><strong>{money(total)}</strong></div><button className="send-button" onClick={sendOrder} disabled={countdown > 0}><BellRinging size={22} weight="fill" /> {countdown > 0 ? `Envoi dans ${countdown}s` : 'Envoyer aux serveurs'}</button><p className="payment-note">Aucun paiement maintenant. Vous réglerez en partant.</p>
       </section></div>}
       {toast && <div className="toast"><CheckCircle weight="fill" /> {toast}</div>}
     </div>
   );
 }
 
-function OrdersBanner({ orders, onDismiss }) {
-  const pending = orders.filter((order) => order.status === 'pending').length;
-  let status;
-  let title;
-  let sub;
-  if (pending > 0) {
-    status = 'pending';
-    title = pending > 1 ? `${pending} commandes envoyées` : 'Commande envoyée';
-    sub = 'En attente de validation. Vous pouvez déjà en envoyer une autre.';
-  } else {
-    const last = orders[orders.length - 1];
-    if (last.status === 'accepted') {
-      status = 'accepted';
-      title = 'Commande acceptée !';
-      sub = 'Vous pouvez commander à nouveau quand vous voulez.';
-    } else {
-      status = 'rejected';
-      title = 'Commande refusée';
-      sub = 'Vous pouvez recommander ou appeler un serveur.';
-    }
-  }
-  const icon = { pending: <Clock weight="fill" />, accepted: <CheckCircle weight="fill" />, rejected: <XCircle weight="fill" /> }[status];
-  return <section className={`status-banner ${status}`}><div className="status-icon">{icon}</div><div><strong>{title}</strong><span>{sub}</span></div><button onClick={onDismiss} aria-label="Fermer"><X size={18} /></button></section>;
+// Bannière persistante : reste affichée tant que la (les) commande(s) sont en
+// attente. Elle disparaît d'elle-même dès que le serveur accepte ou refuse
+// (la commande est alors retirée de la liste), même après un rafraîchissement.
+function OrdersBanner({ orders }) {
+  const pending = orders.length;
+  const title = pending > 1 ? `${pending} commandes envoyées` : 'Commande envoyée';
+  return <section className="status-banner pending"><div className="status-icon"><Clock weight="fill" /></div><div><strong>{title}</strong><span>En attente de validation par les serveurs.</span></div></section>;
 }
