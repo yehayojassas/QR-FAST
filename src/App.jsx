@@ -35,7 +35,8 @@ function displayCategory(category) {
   return category;
 }
 
-function categoryImage(row) {
+function categoryImage(row, productImages = {}) {
+  if (productImages[row.article]) return productImages[row.article];
   if (EXACT_IMAGES[row.article]) return EXACT_IMAGES[row.article];
   if (row.categorie === 'Vin blanc') return '/products/white-wine.png';
   if (row.categorie === 'Vin rouge') return '/products/red-wine.png';
@@ -85,14 +86,17 @@ export function App() {
   const dragStart = useRef(null);
 
   useEffect(() => {
-    fetch('/menu.csv').then((response) => response.text()).then((text) => {
+    Promise.all([
+      fetch('/menu.csv').then((response) => response.text()),
+      fetch('/product-images.json').then((response) => response.json()).catch(() => ({})),
+    ]).then(([text, productImages]) => {
       const loaded = parseCsv(text).map((row, index) => ({
         id: index + 1,
         name: row.article,
         price: Number(row.prix_chf),
         category: displayCategory(row.categorie),
         sourceCategory: row.categorie,
-        image: categoryImage(row),
+        image: categoryImage(row, productImages),
         description: row.description || row.categorie,
         size: row.contenance,
         type: row.type,
@@ -153,7 +157,7 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="demo-header">
-        <button className="brand" aria-label="Accueil ClickOne"><span>C.O</span></button>
+        <button className="brand" aria-label="Accueil ClickOn"><span>C.O</span></button>
         <button className="table-pill">Table 7 <span>⌄</span></button>
       </header>
 
