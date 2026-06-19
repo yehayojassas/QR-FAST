@@ -1,0 +1,1005 @@
+/* =============================================================================
+   ClickOn · modules.css
+   -----------------------------------------------------------------------------
+   ICI LA COULEUR EXPLOSE. Chaque module est une « œuvre » encadrée par le
+   blanc de la coquille. Chaque bloc déclare SA propre palette en variables
+   scopées (--m-*) → autonome, extractible, revendable.
+   Le contraste entre la sobriété ClickOn et la richesse des modules EST
+   l'argument visuel central.
+   ========================================================================== */
+
+
+/* ===========================================================================
+   M1 · HERO SCROLL-DRIVEN — « La première impression en 3 secondes »
+   Démarre en blanc/noir ClickOn pur, puis le rideau se lève en couleur.
+   =========================================================================== */
+.hero {
+  --m-accent: #ff3b1f;          /* rouge signal — l'irruption de vie        */
+  --m-accent-2: #ffd166;
+  --m-deep: #0a0a0a;
+  position: relative;
+  /* piste de scroll haute : permet le pinning + le déroulé                 */
+  height: 320vh;
+  /* le hero occupe tout l'espace : on neutralise le padding du .module     */
+  padding-block: 0;
+}
+.hero__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 600px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  text-align: center;
+  /* on réserve une bande en haut (timer + kicker) et en bas (indice de scroll)
+     pour que le titre, centré dans l'espace restant, ne chevauche jamais rien. */
+  padding: calc(var(--header-h) + 3.25rem) var(--gutter) 4.5rem;
+}
+
+/* Compteur « 3 secondes » discret */
+.hero__timer {
+  position: absolute;
+  top: calc(var(--header-h) + var(--space-m));
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  display: inline-flex;
+  gap: 0.8ch;
+  align-items: center;
+}
+.hero__timer b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* Couches de parallaxe (déplacées par hero.js via --p, progression 0→1) */
+.hero__layers { position: absolute; inset: 0; pointer-events: none; }
+.hero__layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  will-change: transform, opacity;
+}
+.hero__ghost {
+  /* mot fantôme géant en fond, gris très clair (le « site mort ») */
+  font-family: var(--font-serif);
+  font-size: clamp(4rem, 22vw, 15rem);
+  font-weight: 600;
+  color: var(--gray-100);
+  letter-spacing: -0.04em;
+  user-select: none;
+  transform: translateY(calc(var(--p, 0) * -8vh)) scale(calc(1 + var(--p,0) * 0.08));
+}
+
+/* Les phrases du hero (révélées séquentiellement) */
+/* largeur en rem (pas en ch : ch se calcule sur la police du conteneur, ~1rem,
+   ce qui forçait un mot par ligne). On laisse le titre respirer sur 2–3 lignes. */
+.hero__copy { position: relative; z-index: 2; max-width: min(92vw, 48rem); padding-inline: var(--gutter); }
+.hero__kicker {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-bottom: var(--space-m);
+}
+.hero__line {
+  font-size: clamp(2.4rem, 5.2vw, 5rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+.hero__line em { font-family: var(--font-serif); font-style: italic; font-weight: 400; }
+.hero__line .accent { color: var(--m-accent); }
+
+/* Mots révélés par masque (chaque mot monte derrière une ligne) */
+.reveal-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  clip-path: inset(0 0 -0.2em 0);
+}
+.reveal-word > span {
+  display: inline-block;
+  transform: translateY(110%);
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+  transition-delay: var(--wd, 0ms);
+}
+.hero.is-armed .reveal-word > span { transform: translateY(0); }
+
+/* Le RIDEAU : panneau de couleur qui monte et révèle le module suivant */
+.hero__curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background:
+    radial-gradient(120% 80% at 50% 120%, var(--m-accent-2) 0%, transparent 55%),
+    linear-gradient(180deg, #ff5a3c 0%, var(--m-accent) 45%, #c01f0a 100%);
+  transform: translateY(calc(100% - var(--curtain, 0) * 100%));
+  display: grid;
+  place-items: center;
+  color: #fff;
+  will-change: transform;
+}
+.hero__curtain-inner {
+  text-align: center;
+  opacity: calc(var(--curtain, 0));
+  transform: translateY(calc((1 - var(--curtain, 0)) * 30px));
+}
+.hero__curtain-inner .big {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--step-5);
+  line-height: 1;
+}
+.hero__curtain-inner .small {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-top: var(--space-s);
+}
+
+/* Indice de défilement */
+.hero__scroll-hint {
+  position: absolute;
+  bottom: var(--space-l);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  opacity: calc(1 - var(--p, 0) * 2);
+}
+.hero__scroll-hint::after {
+  content: "";
+  display: block;
+  width: 1px; height: 32px;
+  margin: 0.6rem auto 0;
+  background: linear-gradient(var(--gray-400), transparent);
+  animation: scrollPulse 2.2s var(--ease-in-out-cubic) infinite;
+}
+@keyframes scrollPulse {
+  0%, 100% { transform: scaleY(0.5); transform-origin: top; opacity: 0.4; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+
+/* ===========================================================================
+   M2 · SITE VIVANT ★ — « Un site qui change tout seul »
+   Le module se RE-THÈME selon l'heure (réelle ou « scrubbée »).
+   Palette pilotée par des variables que living.js met à jour en continu.
+   =========================================================================== */
+.living {
+  /* valeurs par défaut (écrasées en live par living.js) */
+  --lv-bg: #0e1430;
+  --lv-bg2: #1b2150;
+  --lv-fg: #f3f5ff;
+  --lv-muted: #aab0d8;
+  --lv-accent: #ffb86b;
+  --lv-glow: #4361ee;
+  --lv-card: rgba(255,255,255,0.06);
+  --lv-line: rgba(255,255,255,0.14);
+}
+.living__frame {
+  position: relative;
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 120% at 80% -10%, var(--lv-glow) 0%, transparent 45%),
+    linear-gradient(165deg, var(--lv-bg) 0%, var(--lv-bg2) 100%);
+  color: var(--lv-fg);
+  box-shadow: var(--shadow-l);
+  transition: background var(--dur-xslow) var(--ease-in-out-cubic),
+              color var(--dur-slow) var(--ease-in-out-cubic);
+  isolation: isolate;
+}
+/* Ciel : astre (soleil/lune) qui se déplace selon l'heure */
+.living__sky { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+.living__orb {
+  position: absolute;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  /* position calculée par JS via --orb-x (0→1) et --orb-y (0→1) */
+  left: calc(var(--orb-x, 0.5) * 100%);
+  top: calc(var(--orb-y, 0.3) * 100%);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 35%, #fff, var(--lv-accent) 60%, transparent 72%);
+  filter: blur(2px);
+  box-shadow: 0 0 80px 20px color-mix(in srgb, var(--lv-accent) 50%, transparent);
+  transition: left var(--dur-xslow) var(--ease-in-out-cubic),
+              top var(--dur-xslow) var(--ease-in-out-cubic),
+              background var(--dur-xslow) var(--ease-in-out-cubic),
+              box-shadow var(--dur-xslow) var(--ease-in-out-cubic);
+}
+/* Étoiles (visibles la nuit, opacité pilotée par --stars 0→1) */
+.living__stars {
+  position: absolute; inset: 0;
+  opacity: var(--stars, 0);
+  transition: opacity var(--dur-xslow) var(--ease-in-out-cubic);
+  background-image:
+    radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 70% 20%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 40% 60%, #fff, transparent),
+    radial-gradient(1px 1px at 85% 50%, #fff, transparent),
+    radial-gradient(1px 1px at 55% 35%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 30% 75%, #fff, transparent),
+    radial-gradient(1px 1px at 90% 80%, #fff, transparent);
+}
+
+.living__inner {
+  position: relative; z-index: 1;
+  display: grid;
+  gap: var(--space-l);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 800px) {
+  .living__inner { grid-template-columns: 1.1fr 0.9fr; align-items: start; }
+}
+
+/* En-tête vivant : salutation + statut ouvert/fermé + horloge */
+.living__brand { font-family: var(--font-serif); font-size: var(--step-3); line-height: 1; }
+.living__greet { color: var(--lv-muted); font-size: var(--step-1); margin-top: var(--space-2xs); min-height: 1.5em; }
+
+.living__status {
+  display: inline-flex; align-items: center; gap: 0.7ch;
+  margin-top: var(--space-m);
+  padding: 0.5em 1em;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--lv-line);
+  background: var(--lv-card);
+  font-weight: 600;
+  font-size: var(--step-0);
+  backdrop-filter: blur(6px);
+}
+.living__status .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 0 0 rgba(46,204,113,0.6);
+  animation: pulseDot 2.4s var(--ease-out-expo) infinite;
+}
+.living__status[data-open="false"] .dot { background: #e74c3c; animation: none; }
+@keyframes pulseDot {
+  0% { box-shadow: 0 0 0 0 rgba(46,204,113,0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(46,204,113,0); }
+  100% { box-shadow: 0 0 0 0 rgba(46,204,113,0); }
+}
+.living__sub { color: var(--lv-muted); font-size: var(--step--1); margin-top: var(--space-2xs); }
+
+/* Bannière saison / météo */
+.living__banner {
+  display: flex; align-items: center; gap: 0.8ch;
+  margin-top: var(--space-m);
+  padding: var(--space-s) var(--space-m);
+  border-radius: var(--radius-m);
+  background: var(--lv-card);
+  border: 1px solid var(--lv-line);
+  font-size: var(--step--1);
+}
+.living__banner .emoji { font-size: 1.4em; }
+
+/* Panneau de contrôle : le scrubber temporel (le WOW) */
+.living__panel {
+  background: var(--lv-card);
+  border: 1px solid var(--lv-line);
+  border-radius: var(--radius-m);
+  padding: var(--space-m);
+  backdrop-filter: blur(8px);
+}
+.living__panel-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--lv-muted); margin-bottom: var(--space-s);
+}
+.living__clock {
+  font-family: var(--font-mono);
+  font-size: var(--step-3);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.living__clock small { font-size: 0.4em; color: var(--lv-muted); letter-spacing: 0.1em; }
+
+.living__scrub { margin-top: var(--space-m); }
+.living__scrub-row { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.7rem; color: var(--lv-muted); margin-bottom: 0.4em; }
+
+/* Range stylé (le doigt qui voyage dans le temps) */
+.time-range {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 6px; border-radius: var(--radius-full);
+  background: linear-gradient(90deg,
+    #14204a 0%, #2a3f8f 25%, #f6c177 50%, #ff7b54 62%, #2a3f8f 80%, #0c1230 100%);
+  outline: none; cursor: grab;
+}
+.time-range:active { cursor: grabbing; }
+.time-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--lv-accent);
+  box-shadow: var(--shadow-m);
+  transition: transform var(--dur-fast) var(--ease-out-back);
+}
+.time-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.time-range::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--lv-accent);
+  box-shadow: var(--shadow-m);
+}
+
+.living__live-btn {
+  margin-top: var(--space-m);
+  width: 100%;
+  padding: 0.7em 1em;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--lv-line);
+  background: transparent;
+  color: var(--lv-fg);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  transition: background var(--dur-base) var(--ease-swift), border-color var(--dur-base);
+}
+.living__live-btn:hover { background: var(--lv-card); border-color: var(--lv-accent); }
+/* État « live » : on garde un texte lisible (contraste AA) et on signale
+   l'état par la bordure accent + un léger fond, pas par une couleur de texte faible. */
+.living__live-btn[data-live="true"] { border-color: var(--lv-accent); background: var(--lv-card); }
+
+.living__note {
+  margin-top: var(--space-m);
+  font-style: italic;
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  color: var(--lv-fg);
+  opacity: 0.92;
+}
+
+
+/* ===========================================================================
+   M3 · GRILLE BENTO — « Montrez tout, sans noyer »
+   Restaurant fictif. Layout magazine asymétrique, hover states riches.
+   =========================================================================== */
+.bento {
+  --b-bg: #faf6ef;
+  --b-ink: #221a14;
+  --b-accent: #c1452f;     /* terracotta                                    */
+  --b-green: #2f5d50;      /* vert profond                                  */
+  --b-cream: #f3e9d8;
+  --b-gold: #d99e3b;
+}
+.bento__board {
+  display: grid;
+  gap: clamp(0.5rem, 1.2vw, 1rem);
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: minmax(120px, auto);
+}
+@media (min-width: 720px) {
+  .bento__board {
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(140px, auto);
+  }
+}
+.bento__tile {
+  position: relative;
+  border-radius: var(--radius-m);
+  padding: var(--space-m);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--b-cream);
+  color: var(--b-ink);
+  transition: transform var(--dur-base) var(--ease-out-expo),
+              box-shadow var(--dur-base) var(--ease-out-expo);
+  will-change: transform;
+}
+.bento__tile:hover { transform: translateY(-4px); box-shadow: var(--shadow-m); z-index: 2; }
+.bento__tile h3 { font-family: var(--font-serif); font-size: var(--step-1); }
+.bento__tag {
+  font-family: var(--font-mono); font-size: 0.66rem;
+  letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7;
+}
+
+/* placement asymétrique (desktop) */
+@media (min-width: 720px) {
+  .bento__tile--hero   { grid-column: span 2; grid-row: span 2; }
+  .bento__tile--tall   { grid-row: span 2; }
+  .bento__tile--wide   { grid-column: span 2; }
+}
+
+/* Tuile vedette : plat signature, dégradé chaud + bruit */
+.bento__tile--hero {
+  background:
+    radial-gradient(120% 120% at 10% 110%, var(--b-gold) 0%, transparent 50%),
+    linear-gradient(150deg, var(--b-accent), #8c2a1c);
+  color: #fff;
+  justify-content: flex-end;
+}
+.bento__tile--hero .kicker { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.85; }
+.bento__tile--hero .dish { font-family: var(--font-serif); font-style: italic; font-size: var(--step-3); line-height: 1; margin-top: var(--space-2xs); }
+.bento__tile--hero .price { margin-top: var(--space-s); font-weight: 700; font-size: var(--step-1); }
+/* halo qui suit le curseur (variables --mx/--my via JS) */
+.bento__tile--hero::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.22), transparent 60%);
+  opacity: 0; transition: opacity var(--dur-base) var(--ease-swift);
+  pointer-events: none;
+}
+.bento__tile--hero:hover::after { opacity: 1; }
+
+/* Tuile horaires */
+.bento__tile--hours { background: var(--b-green); color: var(--b-cream); }
+.bento__hours-list { display: flex; flex-direction: column; gap: 0.25em; font-size: var(--step--1); margin-top: var(--space-s); }
+.bento__hours-list li { display: flex; justify-content: space-between; gap: 1ch; }
+.bento__hours-list .today { font-weight: 700; color: #fff; }
+.bento__hours-list .today::after { content: " ·"; }
+
+/* Tuile avis (étoiles) */
+.bento__tile--reviews { background: #fff; border: 1px solid color-mix(in srgb, var(--b-ink) 10%, transparent); }
+.bento__stars { color: var(--b-gold); font-size: var(--step-1); letter-spacing: 0.1em; }
+.bento__quote { font-family: var(--font-serif); font-style: italic; font-size: var(--step-0); margin-top: var(--space-2xs); }
+.bento__review-meta { font-family: var(--font-mono); font-size: 0.66rem; opacity: 0.6; margin-top: var(--space-2xs); }
+
+/* Tuile contact (CTA) */
+.bento__tile--contact { background: var(--b-ink); color: var(--b-cream); }
+.bento__tile--contact .phone { font-family: var(--font-serif); font-size: var(--step-2); margin-top: var(--space-2xs); }
+.bento__tile--contact a { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Tuile image (motif géométrique CSS, pas de fichier) */
+.bento__tile--pattern {
+  background-color: var(--b-accent);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.12) 0 10px, transparent 10px 20px);
+}
+.bento__tile--pattern .label { color: #fff; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; }
+
+/* Tuile « petit plus » (badge animé) */
+.bento__tile--badge { background: var(--b-gold); color: var(--b-ink); align-items: flex-start; justify-content: center; text-align: left; }
+.bento__tile--badge .big { font-family: var(--font-serif); font-size: var(--step-3); line-height: 0.9; }
+
+
+/* ===========================================================================
+   M3b · COMMANDE EN LIGNE — « Adapté à vos besoins et services »
+   Exemple réel : la commande de Flash Pizzas. Démontre une fonctionnalité
+   sur-mesure (panier, choix des tailles, total en direct) — 100 % côté client.
+   =========================================================================== */
+.commande {
+  --fp-red: #e11600;
+  --fp-red-deep: #8b0000;
+  --fp-gold: #f5c800;
+  --fp-dark: #1a0f0c;
+  --fp-dark-2: #2a1612;
+  --fp-cream: #fff7ec;
+  --fp-ink: #231613;
+  --fp-line: rgba(255,255,255,0.12);
+  --fp-card: rgba(255,255,255,0.05);
+}
+.commande__shop {
+  position: relative;
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 100% 0%, var(--fp-red) 0%, transparent 45%),
+    linear-gradient(160deg, var(--fp-dark) 0%, var(--fp-dark-2) 100%);
+  color: var(--fp-cream);
+  box-shadow: var(--shadow-l);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+@media (min-width: 920px) {
+  .commande__shop { grid-template-columns: 1.7fr 1fr; }
+}
+
+/* Bandeau enseigne */
+.commande__bar {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-s);
+  padding: var(--space-s) var(--space-m);
+  border-bottom: 1px solid var(--fp-line);
+  background: rgba(0,0,0,0.2);
+}
+.commande__brand { display: flex; align-items: center; gap: 0.7ch; font-weight: 700; letter-spacing: -0.01em; }
+.commande__brand .logo { height: 34px; width: auto; }
+.commande__brand .fp-name { font-family: var(--font-serif); font-size: var(--step-1); }
+.commande__brand .fp-name b { color: var(--fp-gold); }
+.commande__open { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fp-cream); opacity: 0.7; display: inline-flex; align-items: center; gap: 0.6ch; }
+.commande__open .dot { width: 8px; height: 8px; border-radius: 50%; background: #34d058; box-shadow: 0 0 0 0 rgba(52,208,88,.5); animation: pulseDot 2.4s var(--ease-out-expo) infinite; }
+
+/* Menu */
+.commande__menu { padding: var(--space-m); }
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: var(--space-s);
+}
+.dish-card {
+  display: flex; flex-direction: column;
+  background: var(--fp-card);
+  border: 1px solid var(--fp-line);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  transition: transform var(--dur-base) var(--ease-out-expo), border-color var(--dur-base) var(--ease-swift);
+}
+.dish-card:hover { transform: translateY(-3px); border-color: var(--fp-gold); }
+/* Cartes plats en texte (pas de photo) */
+.dish-card__body { padding: var(--space-m) var(--space-s) var(--space-s); display: flex; flex-direction: column; gap: var(--space-2xs); flex: 1; }
+.dish-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6ch; }
+.dish-card__name { font-family: var(--font-serif); font-size: var(--step-1); line-height: 1.05; }
+.dish-card__tag {
+  flex: none;
+  font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.04em;
+  background: var(--fp-gold); color: var(--fp-ink); font-weight: 700;
+  padding: 0.3em 0.6em; border-radius: var(--radius-full); white-space: nowrap;
+}
+.dish-card__desc { font-size: 0.78rem; color: rgba(255,247,236,0.62); line-height: 1.4; flex: 1; }
+
+/* tailles (pills) */
+.dish-card__sizes { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 0.2em; }
+.size-pill {
+  font-family: var(--font-mono); font-size: 0.66rem;
+  padding: 0.35em 0.6em; border-radius: var(--radius-full);
+  border: 1px solid var(--fp-line); color: var(--fp-cream);
+  transition: background var(--dur-fast) var(--ease-swift), border-color var(--dur-fast), color var(--dur-fast);
+}
+.size-pill[aria-pressed="true"] { background: var(--fp-gold); color: var(--fp-ink); border-color: var(--fp-gold); font-weight: 700; }
+
+.dish-card__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2xs); margin-top: var(--space-2xs); }
+.dish-card__price { font-weight: 700; font-size: var(--step-1); }
+.dish-card__price small { font-size: 0.6em; opacity: 0.6; font-weight: 400; }
+.add-btn {
+  display: inline-flex; align-items: center; gap: 0.5ch;
+  background: var(--fp-red); color: #fff; font-weight: 700;
+  padding: 0.55em 0.9em; border-radius: var(--radius-full); font-size: 0.8rem;
+  transition: transform var(--dur-fast) var(--ease-out-back), background var(--dur-fast);
+}
+.add-btn:hover { transform: scale(1.06); background: #ff2a14; }
+.add-btn:active { transform: scale(0.96); }
+
+/* Autres cartes (catégories non fonctionnelles — démo) — tout en bas */
+.commande__more {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-s);
+  padding: var(--space-m);
+  border-top: 1px solid var(--fp-line);
+  background: rgba(0,0,0,0.2);
+}
+.commande__more-label {
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--fp-cream); opacity: 0.55;
+}
+.cat-btn {
+  display: inline-flex; align-items: center; gap: 0.5ch;
+  padding: 0.6em 1.2em; border-radius: var(--radius-full);
+  border: 1px dashed var(--fp-line); color: var(--fp-cream); opacity: 0.75;
+  font-size: 0.86rem; cursor: not-allowed;
+}
+.cat-btn:disabled { background: transparent; }
+.commande__more-soon {
+  font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--fp-gold); opacity: 0.8;
+}
+
+/* Panier */
+.cart {
+  background: rgba(0,0,0,0.28);
+  border-left: 1px solid var(--fp-line);
+  padding: var(--space-m);
+  display: flex; flex-direction: column;
+}
+@media (max-width: 919px) { .cart { border-left: 0; border-top: 1px solid var(--fp-line); } }
+.cart__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-s); }
+.cart__title { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fp-cream); opacity: 0.8; }
+.cart__count {
+  font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+  background: var(--fp-gold); color: var(--fp-ink);
+  min-width: 1.7em; height: 1.7em; padding: 0 0.4em;
+  border-radius: var(--radius-full); display: inline-grid; place-items: center;
+}
+.cart__list { display: flex; flex-direction: column; gap: var(--space-2xs); min-height: 80px; }
+.cart__empty { color: rgba(255,247,236,0.5); font-style: italic; font-family: var(--font-serif); font-size: var(--step-0); padding: var(--space-m) 0; }
+.cart__line {
+  display: grid; grid-template-columns: 1fr auto; gap: 0.4em 0.8ch; align-items: center;
+  padding: var(--space-2xs) 0; border-bottom: 1px solid var(--fp-line);
+  animation: cartIn var(--dur-base) var(--ease-out-back);
+}
+@keyframes cartIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+.cart__line-name { font-weight: 600; font-size: 0.85rem; }
+.cart__line-name span { display: block; font-family: var(--font-mono); font-size: 0.62rem; opacity: 0.55; font-weight: 400; }
+.cart__line-price { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 0.85rem; }
+.qty { display: inline-flex; align-items: center; gap: 0.5ch; }
+.qty button {
+  width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--fp-line);
+  color: var(--fp-cream); display: grid; place-items: center; font-size: 0.9rem; line-height: 1;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+.qty button:hover { background: var(--fp-red); border-color: var(--fp-red); }
+.qty span { font-variant-numeric: tabular-nums; min-width: 1.4ch; text-align: center; font-weight: 700; font-size: 0.8rem; }
+
+.cart__foot { margin-top: auto; padding-top: var(--space-s); }
+.cart__total { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: var(--space-s); }
+.cart__total .lbl { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }
+.cart__total .amt { font-family: var(--font-serif); font-size: var(--step-3); line-height: 1; }
+.cart__total .amt small { font-size: 0.45em; opacity: 0.6; }
+.cart__cta {
+  width: 100%; text-align: center;
+  background: var(--fp-gold); color: var(--fp-ink); font-weight: 700;
+  padding: 0.85em 1em; border-radius: var(--radius-full); font-size: var(--step-0);
+  transition: transform var(--dur-base) var(--ease-out-back), filter var(--dur-base);
+}
+.cart__cta:hover { transform: translateY(-2px); filter: brightness(1.05); }
+.cart__cta:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.cart__note { font-family: var(--font-mono); font-size: 0.64rem; opacity: 0.55; text-align: center; margin-top: var(--space-2xs); }
+/* message de confirmation (démo) */
+.cart__done {
+  margin-top: var(--space-s); padding: var(--space-s);
+  border: 1px solid var(--fp-gold); border-radius: var(--radius-m);
+  background: rgba(245,200,0,0.08); color: var(--fp-cream);
+  font-size: 0.82rem; line-height: 1.45;
+  animation: cartIn var(--dur-base) var(--ease-out-back);
+}
+.cart__done b { color: var(--fp-gold); }
+
+/* ===========================================================================
+   M4 · TYPOGRAPHIE CINÉTIQUE — « Votre marque, pas un template »
+   Variable font (Fraunces). Mot qui cycle entre identités de métiers.
+   =========================================================================== */
+.kinetic {
+  --k-bg: #0b0b0d;
+  --k-fg: #f5f3ee;
+  --k-accent: #b6ff3a;     /* vert électrique                               */
+}
+.kinetic__stage {
+  position: relative;
+  border-radius: var(--radius-l);
+  background: var(--k-bg);
+  color: var(--k-fg);
+  padding: clamp(2rem, 6vw, 5rem) clamp(1.5rem, 4vw, 3rem);
+  overflow: hidden;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-l);
+}
+/* Marquee de fond, poids variable animé */
+.kinetic__marquee {
+  position: absolute;
+  inset-inline: 0;
+  white-space: nowrap;
+  font-family: var(--font-serif);
+  font-size: clamp(4rem, 16vw, 14rem);
+  font-weight: 300;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--k-fg) 16%, transparent);
+  opacity: 0.5;
+  user-select: none;
+  pointer-events: none;
+}
+.kinetic__marquee--top { top: 4%; }
+.kinetic__marquee--bottom { bottom: 4%; }
+.kinetic__marquee span { display: inline-block; padding-inline: 0.3em; will-change: transform; }
+
+/* Ligne principale : « Vous êtes un ___ » avec le mot qui se transforme */
+.kinetic__lead { font-family: var(--font-mono); font-size: var(--step--1); letter-spacing: 0.2em; text-transform: uppercase; color: color-mix(in srgb, var(--k-fg) 60%, transparent); position: relative; z-index: 2; }
+.kinetic__headline {
+  position: relative; z-index: 2;
+  font-size: clamp(2.5rem, 9vw, 7rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+.kinetic__rotator {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--k-accent);
+  display: inline-block;
+  font-variation-settings: "opsz" 144, "wght" 600, "SOFT" 0;
+}
+/* le mot qui change : transition par masque vertical */
+.kinetic__word { display: inline-block; will-change: transform, opacity; }
+
+.kinetic__sub {
+  position: relative; z-index: 2;
+  max-width: 46ch;
+  color: color-mix(in srgb, var(--k-fg) 75%, transparent);
+  font-size: var(--step-1);
+}
+.kinetic__sub b { color: var(--k-accent); font-weight: 700; }
+
+/* Texte masqué : gradient animé clippé dans le texte (au survol/scroll) */
+.kinetic__masked {
+  position: relative; z-index: 2;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(2rem, 7vw, 5rem);
+  letter-spacing: -0.02em;
+  background: linear-gradient(100deg, var(--k-accent), #3ad1ff 35%, #ff5ec7 70%, var(--k-accent));
+  background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  animation: maskFlow 9s var(--ease-in-out-cubic) infinite;
+}
+@keyframes maskFlow { to { background-position: 300% 0; } }
+
+
+/* ===========================================================================
+   M5 · CARTE VAUD — « Ancré dans votre région »
+   Carte stylisée custom (SVG), pas un iframe Google. Zone de chalandise.
+   =========================================================================== */
+.geo {
+  --g-water: #1a4f7a;
+  --g-water-2: #2e7fb8;
+  --g-land: #eef2f0;
+  --g-ink: #0c2233;
+  --g-accent: #ff5a3c;
+}
+.geo__frame {
+  position: relative;
+  display: grid;
+  gap: var(--space-l);
+  grid-template-columns: 1fr;
+  align-items: center;
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  background:
+    linear-gradient(160deg, #f7faf9, #e9eff0);
+  border: 1px solid var(--line);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+@media (min-width: 860px) { .geo__frame { grid-template-columns: 0.85fr 1.15fr; } }
+
+.geo__map { position: relative; width: 100%; }
+.geo__map svg { width: 100%; height: auto; overflow: visible; }
+
+/* Le lac : dégradé + léger mouvement */
+.geo__water { fill: url(#lacGrad); }
+.geo__land { fill: var(--g-land); stroke: #d9e2df; stroke-width: 1; }
+
+/* Onde de portée (zone de chalandise) autour du studio */
+.geo__reach {
+  fill: color-mix(in srgb, var(--g-accent) 14%, transparent);
+  stroke: var(--g-accent);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: reachPulse 4s var(--ease-in-out-cubic) infinite;
+}
+@keyframes reachPulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+/* Villes */
+.geo__city { cursor: pointer; }
+.geo__city-dot {
+  fill: var(--g-ink);
+  transition: r var(--dur-base) var(--ease-out-back), fill var(--dur-base) var(--ease-swift);
+}
+.geo__city:hover .geo__city-dot,
+.geo__city[data-active="true"] .geo__city-dot { fill: var(--g-accent); r: 7; }
+.geo__city-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--g-ink);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--dur-base) var(--ease-swift), transform var(--dur-base) var(--ease-out-expo);
+}
+.geo__city:hover .geo__city-label,
+.geo__city[data-active="true"] .geo__city-label { opacity: 1; transform: translateY(0); }
+
+/* Marqueur studio (pulse permanent) */
+.geo__studio { fill: var(--g-accent); }
+.geo__studio-ring {
+  fill: none; stroke: var(--g-accent); stroke-width: 2;
+  transform-box: fill-box; transform-origin: center;
+  animation: studioPing 2.6s var(--ease-out-expo) infinite;
+}
+@keyframes studioPing {
+  0% { transform: scale(0.4); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Panneau d'info de la ville sélectionnée */
+.geo__info { }
+.geo__info-city { font-family: var(--font-serif); font-size: var(--step-3); color: var(--g-ink); line-height: 1; transition: opacity var(--dur-base); }
+.geo__info-meta { font-family: var(--font-mono); font-size: var(--step--1); color: var(--g-water); letter-spacing: 0.06em; margin-top: var(--space-2xs); }
+.geo__info-desc { margin-top: var(--space-s); color: var(--gray-700); max-width: 42ch; }
+.geo__stats { display: flex; gap: var(--space-l); margin-top: var(--space-m); }
+.geo__stat .n { font-family: var(--font-serif); font-size: var(--step-2); color: var(--g-accent); display: block; line-height: 1; }
+.geo__stat .l { font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-500); }
+
+
+/* ===========================================================================
+   M6 · AVANT / APRÈS ★ — « L'écart, sans un mot »
+   Slider clip-path. Deux vrais mockups HTML (pas des images).
+   =========================================================================== */
+.compare { --c-handle: #0a0a0a; }
+.compare__viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 80vh;
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  box-shadow: var(--shadow-l);
+  user-select: none;
+  touch-action: pan-y;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+@media (max-width: 600px) { .compare__viewport { aspect-ratio: 3 / 4; } }
+
+/* Les deux panneaux occupent tout le viewport, superposés */
+.compare__side { position: absolute; inset: 0; overflow: hidden; }
+.compare__side > .mock { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Captures réelles avant/après (1440×900 → ratio identique au viewport). */
+.compare__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+
+/* APRÈS (dessous, toujours visible) */
+.compare__after { z-index: 1; }
+/* AVANT (dessus, clippé par --pos : 0→100%) */
+.compare__before {
+  z-index: 2;
+  clip-path: inset(0 calc(100% - var(--pos, 50%)) 0 0);
+  will-change: clip-path;
+}
+
+/* Étiquettes */
+.compare__badge {
+  position: absolute; top: var(--space-s);
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 0.4em 0.9em; border-radius: var(--radius-full);
+  z-index: 4; pointer-events: none;
+}
+.compare__badge--before { left: var(--space-s); background: rgba(0,0,0,0.6); color: #fff; }
+.compare__badge--after { right: var(--space-s); background: #0a0a0a; color: #fff; }
+
+/* Poignée de glissement */
+.compare__handle {
+  position: absolute; top: 0; bottom: 0;
+  left: var(--pos, 50%);
+  width: 2px;
+  background: var(--c-handle);
+  z-index: 3;
+  transform: translateX(-1px);
+  will-change: left;
+}
+.compare__grip {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--c-handle);
+  box-shadow: var(--shadow-m);
+  display: grid; place-items: center;
+  cursor: ew-resize;
+  transition: transform var(--dur-fast) var(--ease-out-back);
+}
+.compare__grip:hover { transform: translate(-50%, -50%) scale(1.08); }
+.compare__grip::before, .compare__grip::after {
+  content: ""; position: absolute;
+  width: 0; height: 0;
+  border-block: 5px solid transparent;
+}
+.compare__grip::before { left: 12px; border-right: 7px solid var(--c-handle); }
+.compare__grip::after  { right: 12px; border-left: 7px solid var(--c-handle); }
+
+/* Range natif invisible superposé (accessibilité clavier) */
+.compare__range {
+  position: absolute; inset: 0; z-index: 5;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: ew-resize; margin: 0;
+}
+
+/* --- Mockup « AVANT » (volontairement daté, années 2000) ----------------- */
+.mock--old {
+  background: #008080;            /* le fameux teal Windows                 */
+  font-family: "Times New Roman", Times, serif;
+  color: #000080;
+  padding: 14px;
+  overflow: hidden;
+}
+.mock--old .win {
+  background: #d4d0c8; border: 2px outset #fff; padding: 0;
+  max-width: 680px; margin: 0 auto;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+}
+.mock--old .titlebar {
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff; font-family: Arial, sans-serif; font-weight: 700; font-size: 12px;
+  padding: 3px 6px; display: flex; justify-content: space-between; align-items: center;
+}
+.mock--old .titlebar span:last-child { font-family: "Courier New", monospace; }
+.mock--old .oldbody { background: #fff; padding: 12px; }
+.mock--old marquee, .mock--old .marquee {
+  color: #ff0000; font-weight: 700; font-family: Arial, sans-serif; font-size: 13px;
+  background: #ffff00; padding: 2px 0; margin-bottom: 8px; overflow: hidden; white-space: nowrap;
+}
+.mock--old .marquee span { display: inline-block; padding-left: 100%; animation: oldMarquee 12s linear infinite; }
+@keyframes oldMarquee { to { transform: translateX(-100%); } }
+.mock--old h1 {
+  font-size: 28px; color: #ff00ff; text-align: center;
+  text-shadow: 2px 2px 0 #00ffff; letter-spacing: 0; font-weight: 700; margin-bottom: 6px;
+}
+.mock--old .underconstruction { text-align: center; font-family: Arial; font-size: 11px; color: #000; }
+.mock--old .blink { animation: oldBlink 1s steps(2, start) infinite; color: #ff0000; font-weight: 700; }
+@keyframes oldBlink { 50% { opacity: 0; } }
+.mock--old .oldnav { text-align: center; margin: 8px 0; font-size: 13px; }
+.mock--old .oldnav a { color: #0000ff; text-decoration: underline; }
+.mock--old .oldcontent { font-size: 13px; line-height: 1.4; color: #000; }
+.mock--old .counter {
+  font-family: "Courier New", monospace; background: #000; color: #0f0;
+  display: inline-block; padding: 1px 6px; letter-spacing: 2px; margin-top: 8px; font-size: 12px;
+}
+.mock--old table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.mock--old td { border: 1px solid #808080; padding: 4px; font-size: 12px; font-family: Arial; }
+
+/* --- Mockup « APRÈS » (ClickOn moderne, propre) -------------------------- */
+.mock--new {
+  background: linear-gradient(170deg, #ffffff 0%, #f5f1ea 100%);
+  color: #1a1a1a;
+  font-family: var(--font-sans);
+  padding: clamp(1rem, 3vw, 2.2rem);
+  display: flex; flex-direction: column; gap: 1rem;
+  overflow: hidden;
+}
+.mock--new .topbar { display: flex; justify-content: space-between; align-items: center; }
+.mock--new .logo { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.1rem, 2.4vw, 1.6rem); }
+.mock--new .topnav { display: flex; gap: 1rem; font-size: 0.8rem; color: #555; }
+.mock--new .hero {
+  display: grid; gap: 0.6rem;
+  padding: clamp(1rem, 3vw, 2rem) 0;
+}
+.mock--new .hero h2 { font-family: var(--font-serif); font-size: clamp(1.6rem, 5vw, 3.2rem); line-height: 1; letter-spacing: -0.02em; }
+.mock--new .hero p { color: #666; max-width: 38ch; font-size: clamp(0.8rem, 1.6vw, 1rem); }
+.mock--new .pill {
+  align-self: start;
+  background: #1a1a1a; color: #fff;
+  padding: 0.55em 1.2em; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+}
+.mock--new .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.mock--new .card {
+  background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 0.8rem;
+  font-size: 0.75rem; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.mock--new .card .k { font-family: var(--font-mono); font-size: 0.6rem; color: #c1452f; letter-spacing: 0.1em; text-transform: uppercase; }
+.mock--new .card .v { font-family: var(--font-serif); font-size: 1rem; margin-top: 0.2em; }
+
+/* Bouton de bascule différences (FLIP) */
+.compare__tools { display: flex; flex-wrap: wrap; gap: var(--space-s); align-items: center; margin-top: var(--space-m); }
+.compare__diff-btn {
+  font-family: var(--font-mono); font-size: var(--step--1); letter-spacing: 0.04em;
+  padding: 0.55em 1.1em; border: 1px solid var(--ink); border-radius: var(--radius-full);
+  transition: background var(--dur-base) var(--ease-swift), color var(--dur-base);
+}
+.compare__diff-btn:hover, .compare__diff-btn[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.compare__hint { font-family: var(--font-mono); font-size: 0.72rem; color: var(--gray-500); }
+
+/* Pastilles « différences » qui apparaissent (FLIP/scale-in) */
+.compare__flags { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.compare__flag {
+  position: absolute;
+  background: var(--ink); color: #fff;
+  font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em;
+  padding: 0.35em 0.7em; border-radius: var(--radius-full);
+  transform: scale(0); opacity: 0;
+  transition: transform var(--dur-base) var(--ease-out-back), opacity var(--dur-base);
+  white-space: nowrap;
+}
+.compare__flag::after {
+  content: ""; position: absolute; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ink); left: -10px; top: 50%; transform: translateY(-50%);
+}
+.compare.show-diff .compare__flag { transform: scale(1); opacity: 1; transition-delay: var(--fd, 0ms); }

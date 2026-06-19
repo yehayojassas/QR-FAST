@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <title>ClickOn — Votre site ne devrait pas être une brochure</title>
+  <meta name="description" content="ClickOn, studio web dans le canton de Vaud. Une démonstration vivante : votre site devrait travailler pour vous, pas dormir dans un tiroir." />
+
+  <!-- Open Graph / partage -->
+  <meta property="og:title" content="ClickOn — Le site qui se vend lui-même" />
+  <meta property="og:description" content="Pas un portfolio. Une démonstration commerciale vivante pour les PME romandes." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="fr_CH" />
+
+  <!-- Polices : préconnexion + chargement non bloquant -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap"
+    rel="stylesheet" />
+
+  <!-- Design system : la coquille d'abord, les modules ensuite -->
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/modules.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div class="read-progress" aria-hidden="true"></div>
+
+  <!-- =====================================================================
+       EN-TÊTE — châssis noir/blanc, sobre et confiant
+       ================================================================== -->
+  <header class="site-header" data-scrolled="false">
+    <a class="brand" href="#top" aria-label="ClickOn — accueil">
+      ClickOn<span class="brand__dot" aria-hidden="true"></span>
+      <small>Studio web · Vaud</small>
+    </a>
+
+    <button class="nav-toggle" aria-expanded="false" aria-controls="nav-index">
+      <span class="nav-toggle__bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="nav-toggle__text">Sommaire</span>
+    </button>
+
+    <a class="header__cta" href="#contact">Parler à ClickOn</a>
+  </header>
+
+  <!-- =====================================================================
+       NAVIGATION — « Table des possibilités », sommaire de galerie
+       ================================================================== -->
+  <div class="nav-scrim" data-open="false"></div>
+  <nav class="nav-index" id="nav-index" data-open="false" aria-label="Table des possibilités">
+    <p class="nav-index__title">Table des possibilités</p>
+    <ul class="nav-index__list">
+      <li><a class="nav-index__link" href="#impression"><span class="nav-index__num">01</span><span class="nav-index__label">Première impression</span></a></li>
+      <li><a class="nav-index__link" href="#vivant"><span class="nav-index__num">02</span><span class="nav-index__label">Un site vivant</span></a></li>
+      <li><a class="nav-index__link" href="#vitrine"><span class="nav-index__num">03</span><span class="nav-index__label">Tout d'un coup d'œil</span></a></li>
+      <li><a class="nav-index__link" href="#commande"><span class="nav-index__num">04</span><span class="nav-index__label">Adapté à vos besoins</span></a></li>
+      <li><a class="nav-index__link" href="#marque"><span class="nav-index__num">05</span><span class="nav-index__label">Votre marque</span></a></li>
+      <li><a class="nav-index__link" href="#region"><span class="nav-index__num">06</span><span class="nav-index__label">Votre région</span></a></li>
+      <li><a class="nav-index__link" href="#avant-apres"><span class="nav-index__num">07</span><span class="nav-index__label">Avant / Après</span></a></li>
+      <li><a class="nav-index__link" href="#contact"><span class="nav-index__num">→</span><span class="nav-index__label">Parlons-en</span></a></li>
+    </ul>
+    <p class="nav-index__foot">
+      ClickOn · Studio web<br>Canton de Vaud, Suisse romande<br>
+      <span aria-hidden="true">↘</span> Ceci est une démo vivante.
+    </p>
+  </nav>
+
+  <main class="shell" id="contenu">
+    <span id="top"></span>
+
+    <!-- ===================================================================
+         M1 · HERO SCROLL-DRIVEN — « La première impression en 3 secondes »
+         Démarre blanc/noir pur, le rideau se lève en couleur.
+         ================================================================ -->
+    <section class="module hero" id="impression" data-module="hero" aria-labelledby="hero-title">
+      <div class="hero__stage">
+        <p class="hero__timer" aria-hidden="true">Décision du visiteur dans <b data-hero-timer>3,0</b> s</p>
+
+        <div class="hero__layers" aria-hidden="true">
+          <div class="hero__layer"><span class="hero__ghost">brochure</span></div>
+        </div>
+
+        <div class="hero__copy">
+          <p class="hero__kicker">ClickOn · Studio web · Vaud</p>
+          <h1 class="hero__line" id="hero-title">
+            <span class="reveal-word"><span style="--wd:0ms">Votre</span></span>
+            <span class="reveal-word"><span style="--wd:80ms">site</span></span>
+            <span class="reveal-word"><span style="--wd:160ms">ne</span></span>
+            <span class="reveal-word"><span style="--wd:240ms">devrait</span></span>
+            <span class="reveal-word"><span style="--wd:320ms">pas</span></span>
+            <span class="reveal-word"><span style="--wd:400ms">être</span></span>
+            <span class="reveal-word"><span style="--wd:480ms">une</span></span>
+            <span class="reveal-word"><em><span style="--wd:560ms">brochure.</span></em></span>
+          </h1>
+        </div>
+
+        <p class="hero__scroll-hint" aria-hidden="true">Faites défiler</p>
+
+        <!-- Le rideau de couleur qui se lève -->
+        <div class="hero__curtain" aria-hidden="true">
+          <div class="hero__curtain-inner">
+            <p class="big">Il devrait <em>travailler</em> pour vous.</p>
+            <p class="small">Voici ce que ça change — section par section.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         M2 · SITE VIVANT ★ — « Un site qui change tout seul »
+         ================================================================ -->
+    <section class="module living" id="vivant" data-module="living" aria-labelledby="living-title">
+      <div class="container">
+        <header class="module__head reveal">
+          <p class="module__index">02 — Le cœur du modèle ClickOn</p>
+          <h2 class="module__title" id="living-title">Un site qui <em>change tout seul.</em></h2>
+          <p class="module__lead">Pendant que vous dormez, votre site s'adapte : il connaît l'heure,
+            le jour, la saison. Il accueille vos clients différemment à 8 h et à 22 h.
+            <strong>Glissez le curseur du temps</strong> ci-dessous — et regardez.</p>
+        </header>
+
+        <div class="living__frame reveal" data-reveal-delay="120">
+          <div class="living__sky" aria-hidden="true">
+            <div class="living__stars"></div>
+            <div class="living__orb"></div>
+          </div>
+
+          <div class="living__inner">
+            <div class="living__left">
+              <p class="living__brand" data-lv-name>Garage du Léman</p>
+              <p class="living__greet" data-lv-greet>Bonjour ! Nous sommes ouverts.</p>
+
+              <div class="living__status" data-lv-status data-open="true">
+                <span class="dot" aria-hidden="true"></span>
+                <span data-lv-status-text>Ouvert maintenant</span>
+              </div>
+              <p class="living__sub" data-lv-status-sub>Ferme à 18 h 00</p>
+
+              <div class="living__banner" data-lv-banner>
+                <span class="emoji" data-lv-banner-emoji aria-hidden="true">☀️</span>
+                <span data-lv-banner-text>Belle journée sur l'Arc lémanique — passez quand vous voulez.</span>
+              </div>
+
+              <p class="living__note" data-lv-note>« Un livrable, c'est figé. Un service, c'est vivant. »</p>
+            </div>
+
+            <aside class="living__panel">
+              <p class="living__panel-title">Heure simulée à Lausanne</p>
+              <p class="living__clock"><span data-lv-clock>08:00</span> <small data-lv-day>Lundi</small></p>
+
+              <div class="living__scrub">
+                <div class="living__scrub-row"><span>00 h</span><span>Voyagez dans le temps</span><span>24 h</span></div>
+                <input class="time-range" type="range" min="0" max="1439" step="1" value="480"
+                  data-lv-range aria-label="Heure de la journée simulée" />
+              </div>
+
+              <button class="living__live-btn" data-lv-live data-live="true">● Synchronisé sur l'heure réelle</button>
+            </aside>
+          </div>
+        </div>
+
+        <div class="cartels reveal">
+          <div class="cartel cartel--tech">
+            <p class="cartel__key">Technique</p>
+            <p class="cartel__value">Theming jour/nuit, statut ouvert/fermé et bannière de saison
+              <strong>calculés en temps réel en JavaScript</strong>, côté client. Zéro backend.</p>
+          </div>
+          <div class="cartel cartel--benefit">
+            <p class="cartel__key">Ce que ça vous apporte</p>
+            <p class="cartel__value">Un site qui <strong>vit avec votre commerce</strong> : il dit « ouvert »
+              quand vous l'êtes, accueille selon l'heure. Plus jamais d'horaires faux ou de page figée.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule rule--container" />
+
+    <!-- ===================================================================
+         M3 · GRILLE BENTO — « Montrez tout, sans noyer »
+         ================================================================ -->
+    <section class="module bento" id="vitrine" data-module="bento" aria-labelledby="bento-title">
+      <div class="container">
+        <header class="module__head reveal">
+          <p class="module__index">03 — Pour restaurants & commerces</p>
+          <h2 class="module__title" id="bento-title">Tout d'un coup d'œil, <em>sans noyer.</em></h2>
+          <p class="module__lead">Services, horaires, avis, contact — comme une vitrine de magasin
+            bien rangée. Le client trouve en deux secondes ce qu'il cherche.</p>
+        </header>
+
+        <div class="bento__board reveal" data-reveal-delay="120">
+          <article class="bento__tile bento__tile--hero" data-tilt>
+            <p class="kicker">Plat de la semaine</p>
+            <p class="dish">Filets de perche<br>du Léman</p>
+            <p class="price">CHF 32.—</p>
+          </article>
+
+          <article class="bento__tile bento__tile--hours">
+            <span class="bento__tag">Horaires</span>
+            <ul class="bento__hours-list" data-bento-hours>
+              <li><span>Lun–Ven</span><span>11:30 – 14:00</span></li>
+              <li><span>Sam</span><span>18:00 – 23:00</span></li>
+              <li><span>Dim</span><span>Fermé</span></li>
+            </ul>
+          </article>
+
+          <article class="bento__tile bento__tile--reviews">
+            <span class="bento__tag">Avis Google</span>
+            <div>
+              <p class="bento__stars" aria-label="4,9 sur 5">★★★★★</p>
+              <p class="bento__quote">« La meilleure terrasse de la côte. »</p>
+              <p class="bento__review-meta">4,9 / 5 · 214 avis</p>
+            </div>
+          </article>
+
+          <article class="bento__tile bento__tile--badge">
+            <span class="bento__tag">Terrasse</span>
+            <p class="big">Vue<br>lac</p>
+          </article>
+
+          <article class="bento__tile bento__tile--pattern">
+            <span class="label">Fait maison</span>
+          </article>
+
+          <article class="bento__tile bento__tile--contact">
+            <span class="bento__tag">Réserver</span>
+            <p class="phone"><a href="tel:+41210000000">021 000 00 00</a></p>
+          </article>
+
+          <article class="bento__tile bento__tile--wide">
+            <span class="bento__tag">Notre cave</span>
+            <h3>Chasselas de Lavaux, en direct du vigneron</h3>
+          </article>
+        </div>
+
+        <div class="cartels reveal">
+          <div class="cartel cartel--tech">
+            <p class="cartel__key">Technique</p>
+            <p class="cartel__value">Grille <strong>bento asymétrique</strong> (CSS Grid),
+              états de survol riches, halo qui suit le curseur. 100 % responsive.</p>
+          </div>
+          <div class="cartel cartel--benefit">
+            <p class="cartel__key">Ce que ça vous apporte</p>
+            <p class="cartel__value">Le client voit <strong>l'essentiel sans scroller</strong> :
+              plat, horaires, avis, téléphone. Moins de questions, plus de réservations.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule rule--container" />
+
+    <!-- ===================================================================
+         M3b · COMMANDE EN LIGNE — « Adapté à vos besoins et services »
+         ================================================================ -->
+    <section class="module commande" id="commande" data-module="commande" aria-labelledby="commande-title">
+      <div class="container">
+        <header class="module__head reveal">
+          <p class="module__index">04 — Des fonctionnalités sur-mesure</p>
+          <h2 class="module__title" id="commande-title">Adapté à vos besoins <em>et services.</em></h2>
+          <p class="module__lead">Réservation, prise de rendez-vous, commande en ligne… ClickOn construit
+            l'outil dont <strong>votre</strong> métier a besoin. Voici un exemple de commande :
+            choisissez vos plats, composez — le <strong>total se calcule tout seul</strong>.</p>
+        </header>
+
+        <div class="commande__shop reveal" data-reveal-delay="120">
+          <div class="commande__bar">
+            <span class="commande__brand">
+              <span class="fp-name">Exemples <b>commandes</b></span>
+            </span>
+            <span class="commande__open"><span class="dot" aria-hidden="true"></span> Ouvert · livraison env. 30 min</span>
+          </div>
+
+          <div class="commande__menu">
+            <div class="menu-grid" data-menu-grid></div>
+          </div>
+
+          <aside class="cart" aria-label="Votre commande">
+            <div class="cart__head">
+              <span class="cart__title">Votre commande</span>
+              <span class="cart__count" data-cart-count>0</span>
+            </div>
+            <div class="cart__list" data-cart-list></div>
+            <div class="cart__foot" data-cart-foot>
+              <div class="cart__total">
+                <span class="lbl">Total</span>
+                <span class="amt"><small>CHF</small> <span data-cart-total>0.00</span></span>
+              </div>
+              <button class="cart__cta" type="button" data-cart-cta disabled>Commander</button>
+              <p class="cart__note">Démo — aucune vraie commande n'est envoyée.</p>
+            </div>
+          </aside>
+
+          <!-- Autres cartes : catégories non fonctionnelles (démo), tout en bas -->
+          <div class="commande__more">
+            <span class="commande__more-label">Autres cartes</span>
+            <button class="cat-btn" type="button" disabled aria-disabled="true">🥤 Boissons</button>
+            <button class="cat-btn" type="button" disabled aria-disabled="true">🍰 Desserts</button>
+            <span class="commande__more-soon">bientôt</span>
+          </div>
+        </div>
+
+        <div class="cartels reveal">
+          <div class="cartel cartel--tech">
+            <p class="cartel__key">Technique</p>
+            <p class="cartel__value">Menu <strong>data-driven</strong>, choix des tailles, panier et total
+              recalculés en direct en JavaScript. Aucun backend, aucune dépendance.</p>
+          </div>
+          <div class="cartel cartel--benefit">
+            <p class="cartel__key">Ce que ça vous apporte</p>
+            <p class="cartel__value">Vos clients <strong>commandent en ligne</strong>, vous recevez tout au propre.
+              Moins de téléphone en plein coup de feu, plus de commandes — adapté à VOTRE métier.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule rule--container" />
+
+    <!-- ===================================================================
+         M4 · TYPOGRAPHIE CINÉTIQUE — « Votre marque, pas un template »
+         ================================================================ -->
+    <section class="module kinetic" id="marque" data-module="kinetic" aria-labelledby="kinetic-title">
+      <div class="container">
+        <header class="module__head reveal">
+          <p class="module__index">05 — L'objection « tous les sites se ressemblent »</p>
+          <h2 class="module__title" id="kinetic-title">Votre marque, <em>pas un template.</em></h2>
+          <p class="module__lead">Une identité locale forte, ça se construit — typographie, mouvement,
+            ton. (Oui, ClickOn est sobre. Mais on sait créer de l'audace pour vous.)</p>
+        </header>
+
+        <div class="kinetic__stage reveal" data-reveal-delay="120">
+          <div class="kinetic__marquee kinetic__marquee--top" aria-hidden="true">
+            <span>identité · caractère · présence · identité · caractère · présence ·</span>
+          </div>
+
+          <p class="kinetic__lead">Vous n'êtes pas « un commerce ». Vous êtes</p>
+          <p class="kinetic__headline">
+            un <span class="kinetic__rotator" data-kinetic-rotator aria-live="polite"><span class="kinetic__word">garage</span></span>
+          </p>
+          <p class="kinetic__sub">…et votre site devrait le <b>crier avec style</b>, pas le murmurer
+            dans un gabarit que partagent dix mille autres entreprises.</p>
+
+          <p class="kinetic__masked">Une typo. Une couleur. Un rythme. Une signature.</p>
+
+          <div class="kinetic__marquee kinetic__marquee--bottom" aria-hidden="true">
+            <span>· sur-mesure · romand · vivant · sur-mesure · romand · vivant</span>
+          </div>
+        </div>
+
+        <div class="cartels reveal">
+          <div class="cartel cartel--tech">
+            <p class="cartel__key">Technique</p>
+            <p class="cartel__value"><strong>Variable fonts</strong> (axes optiques & graisse animés),
+              typographie cinétique, texte masqué par dégradé, marquees pilotés au scroll.</p>
+          </div>
+          <div class="cartel cartel--benefit">
+            <p class="cartel__key">Ce que ça vous apporte</p>
+            <p class="cartel__value">Une <strong>identité reconnaissable</strong> entre toutes.
+              On ne vous confond plus avec le concurrent d'à côté — ni avec un template acheté.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule rule--container" />
+
+    <!-- ===================================================================
+         M5 · CARTE VAUD — « Ancré dans votre région »
+         ================================================================ -->
+    <section class="module geo" id="region" data-module="geo" aria-labelledby="geo-title">
+      <div class="container">
+        <header class="module__head reveal">
+          <p class="module__index">06 — SEO local & proximité</p>
+          <h2 class="module__title" id="geo-title">Ancré dans <em>votre région.</em></h2>
+          <p class="module__lead">Vos clients sont à Morges, Nyon, Vevey — pas à l'autre bout du monde.
+            Votre site doit parler à <strong>l'Arc lémanique</strong>, et Google doit le savoir.</p>
+        </header>
+
+        <div class="geo__frame reveal" data-reveal-delay="120">
+          <!-- Carte stylisée custom (SVG inline, pas un iframe Google) -->
+          <div class="geo__map">
+            <svg viewBox="0 0 520 420" role="img" aria-label="Carte stylisée de l'Arc lémanique vaudois">
+              <defs>
+                <linearGradient id="lacGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#2e7fb8" />
+                  <stop offset="100%" stop-color="#1a4f7a" />
+                </linearGradient>
+              </defs>
+
+              <!-- masse terrestre stylisée -->
+              <path class="geo__land" d="M10,10 H510 V410 H10 Z" />
+              <!-- Le Léman (croissant stylisé) -->
+              <path class="geo__water" d="M40,300 C120,250 200,360 300,330 C380,308 440,360 500,330 L500,410 L40,410 Z" />
+
+              <!-- zone de chalandise autour du studio -->
+              <circle class="geo__reach" cx="250" cy="220" r="120" />
+
+              <!-- villes (data-city pilote le panneau d'info) -->
+              <g class="geo__city" data-city="Lausanne" data-pop="140 000" data-desc="Capitale vaudoise. Forte concurrence : se démarquer en ligne y est décisif." data-active="true" tabindex="0" role="button" aria-label="Lausanne">
+                <circle class="geo__city-dot" cx="250" cy="220" r="5" />
+                <text class="geo__city-label" x="262" y="216">Lausanne</text>
+              </g>
+              <g class="geo__city" data-city="Morges" data-pop="16 000" data-desc="Petite ville, clientèle fidèle. Le bon site local fait toute la différence." tabindex="0" role="button" aria-label="Morges">
+                <circle class="geo__city-dot" cx="170" cy="245" r="5" />
+                <text class="geo__city-label" x="120" y="240">Morges</text>
+              </g>
+              <g class="geo__city" data-city="Nyon" data-pop="21 000" data-desc="Entre Lausanne et Genève. Capter le trafic de passage, c'est en ligne." tabindex="0" role="button" aria-label="Nyon">
+                <circle class="geo__city-dot" cx="95" cy="285" r="5" />
+                <text class="geo__city-label" x="48" y="280">Nyon</text>
+              </g>
+              <g class="geo__city" data-city="Vevey" data-pop="20 000" data-desc="Riviera vaudoise, tourisme fort. Être trouvé par les visiteurs = des clients." tabindex="0" role="button" aria-label="Vevey">
+                <circle class="geo__city-dot" cx="360" cy="250" r="5" />
+                <text class="geo__city-label" x="372" y="246">Vevey</text>
+              </g>
+              <g class="geo__city" data-city="Montreux" data-pop="26 000" data-desc="Événements, festivals, hôtels. La saisonnalité se gère… avec un site vivant." tabindex="0" role="button" aria-label="Montreux">
+                <circle class="geo__city-dot" cx="415" cy="270" r="5" />
+                <text class="geo__city-label" x="427" y="266">Montreux</text>
+              </g>
+              <g class="geo__city" data-city="Yverdon" data-pop="30 000" data-desc="Nord vaudois. Moins de concurrence en ligne : une longueur d'avance à prendre." tabindex="0" role="button" aria-label="Yverdon-les-Bains">
+                <circle class="geo__city-dot" cx="210" cy="90" r="5" />
+                <text class="geo__city-label" x="222" y="86">Yverdon</text>
+              </g>
+
+              <!-- marqueur studio ClickOn -->
+              <g class="geo__studio-marker" aria-hidden="true">
+                <circle class="geo__studio-ring" cx="250" cy="220" r="9" />
+                <circle class="geo__studio" cx="250" cy="220" r="4" />
+              </g>
+            </svg>
+          </div>
+
+          <div class="geo__info" data-geo-info>
+            <p class="geo__info-city" data-geo-city>Lausanne</p>
+            <p class="geo__info-meta" data-geo-meta>≈ 140 000 habitants · zone de chalandise active</p>
+            <p class="geo__info-desc" data-geo-desc>Capitale vaudoise. Forte concurrence : se démarquer en ligne y est décisif.</p>
+            <div class="geo__stats">
+              <div class="geo__stat"><span class="n">46 %</span><span class="l">des recherches sont locales</span></div>
+              <div class="geo__stat"><span class="n">3 s</span><span class="l">pour convaincre un voisin</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cartels reveal">
+          <div class="cartel cartel--tech">
+            <p class="cartel__key">Technique</p>
+            <p class="cartel__value">Carte <strong>SVG dessinée à la main</strong>, interactions au survol
+              et au clavier, onde de portée animée. Aucun iframe Google brut.</p>
+          </div>
+          <div class="cartel cartel--benefit">
+            <p class="cartel__key">Ce que ça vous apporte</p>
+            <p class="cartel__value">Vous parlez à <strong>vos voisins</strong>, ceux qui poussent la porte.
+              Et Google comprend où vous êtes → vous remontez dans les recherches locales.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule rule--container" />
+
+    <!-- ===================================================================
+         M6 · AVANT / APRÈS ★ — « L'écart, sans un mot »
+         ================================================================ -->
+    <section class="module compare" id="avant-apres" data-module="compare" aria-labelledby="compare-title">
+      <div class="container">
+        <header class="module__head reveal">
+          <p class="module__index">07 — Le coup de grâce · exemple réel</p>
+          <h2 class="module__title" id="compare-title">L'écart, <em>sans un mot.</em></h2>
+          <p class="module__lead">Un cas réel : <strong>Mov'It Fitness</strong> (Territet-Montreux &amp; Bex).
+            À gauche, leur ancien site. À droite, ce que ClickOn a livré.
+            <strong>Glissez la poignée</strong> et jugez vous-même.</p>
+        </header>
+
+        <div class="compare__viewport reveal" data-reveal-delay="120" data-compare>
+          <!-- APRÈS (dessous) — nouveau site Mov'It par ClickOn -->
+          <div class="compare__side compare__after">
+            <img class="compare__img" src="assets/movit/apres.png" loading="lazy"
+              alt="Mov'It Fitness — nouveau site réalisé par ClickOn : vitrine vidéo et identité affirmée" />
+          </div>
+
+          <!-- AVANT (dessus, clippé) — ancien site -->
+          <div class="compare__side compare__before">
+            <img class="compare__img" src="assets/movit/avant.png" loading="lazy"
+              alt="Mov'It Fitness — ancien site" />
+          </div>
+
+          <!-- Étiquettes -->
+          <span class="compare__badge compare__badge--before">Aujourd'hui</span>
+          <span class="compare__badge compare__badge--after">Avec ClickOn</span>
+
+          <!-- Pastilles de différences (FLIP) -->
+          <div class="compare__flags" aria-hidden="true">
+            <span class="compare__flag" style="left:16%; top:28%; --fd:0ms">Pensé mobile d'abord</span>
+            <span class="compare__flag" style="left:58%; top:22%; --fd:80ms">Séance d'essai en 1 clic</span>
+            <span class="compare__flag" style="left:20%; top:66%; --fd:160ms">Identité de marque forte</span>
+            <span class="compare__flag" style="left:60%; top:70%; --fd:240ms">Infos en direct</span>
+          </div>
+
+          <!-- Poignée -->
+          <div class="compare__handle" aria-hidden="true">
+            <span class="compare__grip"></span>
+          </div>
+
+          <!-- Range natif (accessibilité clavier) -->
+          <input class="compare__range" type="range" min="0" max="100" value="50"
+            data-compare-range aria-label="Glisser pour comparer avant et après" />
+        </div>
+
+        <div class="compare__tools reveal">
+          <button class="compare__diff-btn" data-compare-diff aria-pressed="false">Voir les différences</button>
+          <span class="compare__hint">Glissez la poignée · ou utilisez les flèches du clavier</span>
+        </div>
+
+        <div class="cartels reveal">
+          <div class="cartel cartel--tech">
+            <p class="cartel__key">Technique</p>
+            <p class="cartel__value">Comparateur <strong>clip-path</strong> au glisser (souris, tactile, clavier),
+              pastilles révélées en transition FLIP. <strong>Deux captures réelles</strong> d'un vrai client.</p>
+          </div>
+          <div class="cartel cartel--benefit">
+            <p class="cartel__key">Ce que ça vous apporte</p>
+            <p class="cartel__value">L'argument le plus honnête : <strong>on ne vous explique pas l'écart,
+              on vous le fait sentir.</strong> Votre futur client, lui, le ressentira aussi.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =====================================================================
+       CTA FINAL — sobre, confiant, boucle le fil rouge
+       ================================================================== -->
+  <footer class="site-footer" id="contact">
+    <canvas class="signature-canvas" data-signature aria-hidden="true"></canvas>
+    <div class="container">
+      <p class="eyebrow">ClickOn · Studio web · Canton de Vaud</p>
+      <p class="footer__claim">Et ça, ce n'est qu'une <em>démo.</em><br>Imaginez le vôtre.</p>
+
+      <div class="footer__grid">
+        <div>
+          <a class="footer__cta" href="mailto:bonjour@clickon.ch?subject=Mon%20site%20devrait%20travailler%20pour%20moi">
+            Parler à ClickOn <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+        <div class="footer__contact">
+          <p class="eyebrow">Écrire</p>
+          <a href="mailto:bonjour@clickon.ch">bonjour@clickon.ch</a>
+          <a href="tel:+41210000000">021 000 00 00</a>
+        </div>
+        <div class="footer__contact">
+          <p class="eyebrow">Où</p>
+          <span style="color:var(--gray-700)">Canton de Vaud</span>
+          <span style="color:var(--gray-700)">Suisse romande</span>
+        </div>
+      </div>
+
+      <div class="footer__legal">
+        <span>© <span data-year>2026</span> ClickOn — Votre site devrait travailler pour vous.</span>
+        <span>Démo · HTML · CSS · JS — sans backend</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =====================================================================
+       SCRIPTS — utilitaires d'abord, modules ensuite, orchestration enfin.
+       Scripts classiques (defer) : fonctionne en file:// comme hébergé.
+       ================================================================== -->
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/hero.js"></script>
+  <script defer src="js/living.js"></script>
+  <script defer src="js/order.js"></script>
+  <script defer src="js/kinetic.js"></script>
+  <script defer src="js/map.js"></script>
+  <script defer src="js/compare.js"></script>
+  <script defer src="js/canvas.js"></script>
+  <script defer src="js/main.js"></script>
+</body>
+</html>

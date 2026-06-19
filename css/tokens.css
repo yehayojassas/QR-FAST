@@ -1,0 +1,103 @@
+/* =============================================================================
+   ClickOn · tokens.css
+   -----------------------------------------------------------------------------
+   Le DESIGN SYSTEM de la coquille « galerie ».
+   Règle fondatrice : la coquille est NEUTRE (noir sur blanc, nuances de gris).
+   Aucune couleur d'accent ici — chaque module définit sa propre palette,
+   scopée localement (voir modules.css). C'est volontaire : un mur blanc
+   qui met en valeur les œuvres.
+   ========================================================================== */
+
+:root {
+  /* --- Encre & papier (le seul contraste structurel) --------------------- */
+  --ink:        #0a0a0a;   /* noir presque pur — texte, châssis             */
+  --ink-soft:   #161616;   /* noir adouci — surfaces sombres                */
+  --paper:      #ffffff;   /* blanc pur — le mur de galerie                 */
+
+  /* --- Échelle de gris (hiérarchie, jamais de couleur) ------------------- */
+  --gray-900:   #1a1a1a;
+  --gray-700:   #3d3d3d;
+  --gray-500:   #6b6b6b;   /* texte secondaire AA sur blanc                 */
+  --gray-400:   #8c8c8c;
+  --gray-300:   #c9c9c9;
+  --gray-200:   #e4e4e4;   /* hairlines, séparateurs                        */
+  --gray-100:   #f4f4f3;   /* surfaces très légères                         */
+
+  /* Surfaces sémantiques de la coquille */
+  --surface:        var(--paper);
+  --surface-muted:  var(--gray-100);
+  --line:           var(--gray-200);
+  --line-strong:    var(--ink);
+
+  /* --- Familles typographiques ------------------------------------------ */
+  --font-sans:  "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:  "Space Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-serif: "Fraunces", Georgia, "Times New Roman", serif;
+
+  /* --- Échelle typographique (fluide, clamp mobile→desktop) -------------- */
+  /* Ratio ~1.25 (tierce majeure), généreuse, rythme éditorial             */
+  --step--1: clamp(0.78rem, 0.74rem + 0.18vw, 0.875rem);
+  --step-0:  clamp(0.95rem, 0.90rem + 0.25vw, 1.0625rem);   /* corps        */
+  --step-1:  clamp(1.18rem, 1.05rem + 0.6vw, 1.5rem);
+  --step-2:  clamp(1.5rem, 1.25rem + 1.1vw, 2.25rem);
+  --step-3:  clamp(2rem, 1.55rem + 2vw, 3.5rem);
+  --step-4:  clamp(2.6rem, 1.8rem + 3.6vw, 5.5rem);
+  --step-5:  clamp(3.2rem, 1.9rem + 6vw, 8.5rem);           /* display      */
+  --step-6:  clamp(3.8rem, 1.5rem + 10vw, 13rem);           /* hero géant   */
+
+  /* --- Espacement (échelle 4px, rythme vertical généreux) --------------- */
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs:  0.75rem;
+  --space-s:   1rem;
+  --space-m:   1.5rem;
+  --space-l:   2.5rem;
+  --space-xl:  4rem;
+  --space-2xl: 6rem;
+  --space-3xl: 9rem;
+  --space-4xl: 14rem;   /* respiration entre œuvres (le blanc qui encadre)  */
+
+  /* --- Grille & contenant ----------------------------------------------- */
+  --content-max: 1320px;
+  --reading-max: 64ch;
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --nav-width: 224px;   /* largeur de la table des possibilités (desktop)   */
+
+  /* --- Rayons ----------------------------------------------------------- */
+  --radius-s: 6px;
+  --radius-m: 14px;
+  --radius-l: 24px;
+  --radius-full: 999px;
+
+  /* --- Easings custom (jamais de linear par défaut) --------------------- */
+  --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);     /* arrivées douces  */
+  --ease-out-quint:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-cubic: cubic-bezier(0.65, 0, 0.35, 1);  /* va-et-vient      */
+  --ease-out-back:   cubic-bezier(0.34, 1.56, 0.64, 1); /* petit rebond     */
+  --ease-swift:      cubic-bezier(0.4, 0, 0.1, 1);      /* interactions UI  */
+
+  /* --- Durées ----------------------------------------------------------- */
+  --dur-fast:  180ms;
+  --dur-base:  320ms;
+  --dur-slow:  640ms;
+  --dur-xslow: 1100ms;
+
+  /* --- Élévation (sobre, jamais d'ombre colorée dans la coquille) -------- */
+  --shadow-s: 0 1px 2px rgba(10, 10, 10, 0.06), 0 2px 8px rgba(10, 10, 10, 0.04);
+  --shadow-m: 0 4px 16px rgba(10, 10, 10, 0.08), 0 12px 32px rgba(10, 10, 10, 0.06);
+  --shadow-l: 0 12px 40px rgba(10, 10, 10, 0.12), 0 32px 64px rgba(10, 10, 10, 0.08);
+
+  /* --- Z-index ---------------------------------------------------------- */
+  --z-canvas: 0;
+  --z-base: 1;
+  --z-nav: 50;
+  --z-header: 60;
+  --z-overlay: 100;
+
+  /* Hauteur d'en-tête (sert aux offsets de scroll) */
+  --header-h: 68px;
+}
+
+/* La coquille ne change jamais de thème — seuls les modules le font.
+   On déclare quand même color-scheme pour les contrôles natifs. */
+:root { color-scheme: light; }
