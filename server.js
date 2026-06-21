@@ -102,3 +102,16 @@ app.get(/.*/, (_req, res) => res.sendFile(join(DIST, "menu.html")));
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`ClickOne en écoute sur le port ${port}`));
+
+// --- Auto-ping anti-veille Render ---
+// Render endort le service après ~15 min sans requête entrante. On se ping
+// soi-même toutes les 7 min pour rester éveillé tant que le process tourne.
+const KEEP_ALIVE_URL =
+  process.env.KEEP_ALIVE_URL || "https://clickone-menu.onrender.com/";
+if (process.env.DISABLE_KEEP_ALIVE !== "1") {
+  setInterval(() => {
+    fetch(KEEP_ALIVE_URL)
+      .then((r) => console.log(`[keep-alive] ${r.status} ${KEEP_ALIVE_URL}`))
+      .catch((err) => console.log(`[keep-alive] erreur: ${err.message}`));
+  }, 7 * 60 * 1000);
+}
