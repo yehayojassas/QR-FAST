@@ -257,13 +257,16 @@ h1, h2, p { margin-top: 0; }
   grid-template-columns: 1fr auto;
   gap: 14px 20px;
   padding-bottom: 25px;
+  /* Gouttière réservée au numéro "01" : la carte ne le recouvre jamais */
+  padding-left: 26px;
   border-bottom: 1px solid var(--line);
 }
 
 .share-index {
   position: absolute;
-  left: -15px;
-  top: 322px;
+  left: 0;
+  top: 210px;
+  z-index: 2;
   color: var(--terracotta);
   font: 500 19px / 1 'Playfair Display', serif;
   writing-mode: horizontal-tb;
@@ -287,12 +290,23 @@ h1, h2, p { margin-top: 0; }
   overflow: hidden;
   border-radius: 29px;
   box-shadow: var(--shadow);
-  background: #f8f2e8;
+  /* Même fond que la page, pas de bloc blanc */
+  background: transparent;
+  padding: 16px;
 }
 
 .share-photo img,
 .share-row-photo img,
-.menu-thumb img,
+.menu-thumb img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  /* Plats/boissons toujours entiers : jamais de crop */
+  object-fit: contain;
+  display: block;
+}
+
 .cart-line img,
 .rotate-stage img {
   width: 100%;
@@ -300,8 +314,6 @@ h1, h2, p { margin-top: 0; }
   object-fit: cover;
   display: block;
 }
-
-.share-photo img { transform: scale(1.01); }
 
 .view-360 {
   position: absolute;
@@ -393,7 +405,8 @@ h1, h2, p { margin-top: 0; }
   height: 138px;
   border-radius: 20px;
   overflow: hidden;
-  background: #f8f1e7;
+  background: transparent;
+  padding: 10px;
 }
 
 .share-row-copy {
@@ -442,7 +455,9 @@ h1, h2, p { margin-top: 0; }
   height: 101px;
   overflow: hidden;
   border-radius: 10px;
-  background: #f7efe4;
+  /* Même fond que la page, image entière avec un peu d'air */
+  background: transparent;
+  padding: 8px;
   box-shadow: 0 10px 26px rgba(80, 59, 35, .10);
 }
 
