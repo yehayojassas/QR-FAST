@@ -272,7 +272,7 @@ export function App() {
         {countdown > 0 && <section className="status-banner pending"><div className="status-icon"><Clock weight="fill" /></div><div><strong>Trop de commandes en cours</strong><span>Votre commande part automatiquement dans {countdown}s…</span></div></section>}
         {myOrders.length > 0 && <OrdersBanner orders={myOrders} />}
         <CategoryNav category={category} setCategory={setCategory} />
-        <CategoryTitle category={category} count={visibleProducts.length} isSharePage={isSharePage} />
+        <CategoryTitle category={category} isSharePage={isSharePage} />
         {isSharePage ? (
           <ShareCategory
             products={visibleProducts}
@@ -359,12 +359,10 @@ function CategoryNav({ category, setCategory }) {
   );
 }
 
-function CategoryTitle({ category, count, isSharePage }) {
-  const suffix = category === 'À partager' || ['Plats', 'Salades', 'Pâtes', 'Desserts'].includes(category) ? 'plats' : 'articles';
+function CategoryTitle({ category, isSharePage }) {
   return (
     <section className={`category-title ${isSharePage ? 'share-title' : ''}`}>
       <h1>{category}</h1>
-      <span>{String(count).padStart(2, '0')} {suffix}</span>
     </section>
   );
 }
