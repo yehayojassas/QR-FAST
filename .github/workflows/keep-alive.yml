@@ -1,0 +1,17 @@
+name: Keep Render Awake
+
+on:
+  schedule:
+    # Toutes les 7 minutes. GitHub Actions peut retarder un peu mais reste
+    # sous le seuil d'inactivité Render (~15 min).
+    - cron: "*/7 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping clickone-menu
+        run: |
+          curl -fsS -o /dev/null -w "HTTP %{http_code} in %{time_total}s\n" \
+            https://clickone-menu.onrender.com/ || exit 0
