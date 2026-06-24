@@ -47,15 +47,23 @@ button:focus-visible {
 h1, h2, p { margin-top: 0; }
 
 .app-shell {
-  width: min(100%, 430px);
+  width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0 auto;
   background:
     radial-gradient(circle at 0 0, rgba(113, 124, 92, .12), transparent 130px),
     linear-gradient(180deg, #fffcf6 0%, var(--paper) 52%, #faf4eb 100%);
   position: relative;
   overflow-x: hidden;
-  box-shadow: 0 0 60px rgba(44, 34, 21, .12);
+}
+
+/* Cadre "maquette téléphone" réservé au desktop ; en mobile la page est plein écran */
+@media (min-width: 481px) {
+  .app-shell {
+    width: min(100%, 430px);
+    box-shadow: 0 0 60px rgba(44, 34, 21, .12);
+  }
 }
 
 .botanical-deco {
