@@ -317,11 +317,34 @@ export function App() {
 }
 
 function CategoryNav({ category, setCategory }) {
-  const activeIndex = Math.max(0, CATEGORIES.indexOf(category));
-  const progress = `${Math.min(100, ((activeIndex + 1) / CATEGORIES.length) * 100)}%`;
+  const stripRef = useRef(null);
+  const [thumb, setThumb] = useState({ width: 100, left: 0, visible: false });
+
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) return undefined;
+    const update = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+      const maxScroll = scrollWidth - clientWidth;
+      // Largeur fixe = proportion visible (curseur de scrollbar), avec un mini visible
+      const width = Math.max(16, Math.min(100, (clientWidth / scrollWidth) * 100));
+      const ratio = maxScroll > 0 ? scrollLeft / maxScroll : 0;
+      // Le curseur se déplace dans la piste sans s'agrandir
+      const left = ratio * (100 - width);
+      setThumb({ width, left, visible: maxScroll > 1 });
+    };
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      el.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
   return (
     <div className="menu-nav-wrap">
-      <nav className="category-strip" aria-label="Catégories">
+      <nav className="category-strip" aria-label="Catégories" ref={stripRef}>
         {CATEGORIES.map((item) => (
           <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>
             {item}
@@ -329,7 +352,9 @@ function CategoryNav({ category, setCategory }) {
         ))}
         <span className="nav-more" aria-hidden="true"><CaretRight size={17} /></span>
       </nav>
-      <div className="swipe-indicator" aria-hidden="true"><span style={{ width: progress }} /></div>
+      <div className={`swipe-indicator${thumb.visible ? '' : ' is-hidden'}`} aria-hidden="true">
+        <span style={{ width: `${thumb.width}%`, left: `${thumb.left}%` }} />
+      </div>
     </div>
   );
 }
