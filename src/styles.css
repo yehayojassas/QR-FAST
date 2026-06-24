@@ -257,14 +257,14 @@ h1, h2, p { margin-top: 0; }
   grid-template-columns: 1fr auto;
   gap: 14px 20px;
   padding-bottom: 25px;
-  /* Gouttière réservée au numéro "01" : la carte ne le recouvre jamais */
-  padding-left: 26px;
+  /* Fine colonne réservée au "01" : visible, jamais recouvert, mais proche de la carte */
+  padding-left: 30px;
   border-bottom: 1px solid var(--line);
 }
 
 .share-index {
   position: absolute;
-  left: 0;
+  left: 2px;
   top: 210px;
   z-index: 2;
   color: var(--terracotta);
@@ -289,10 +289,10 @@ h1, h2, p { margin-top: 0; }
   aspect-ratio: .98;
   overflow: hidden;
   border-radius: 29px;
-  box-shadow: var(--shadow);
-  /* Même fond que la page, pas de bloc blanc */
+  /* Fond identique à la page (le blanc de la photo se fond via multiply) */
   background: transparent;
-  padding: 16px;
+  /* Juste un filet d'air : l'image reste grande */
+  padding: 6px;
 }
 
 .share-photo img,
@@ -304,6 +304,9 @@ h1, h2, p { margin-top: 0; }
   max-height: 100%;
   /* Plats/boissons toujours entiers : jamais de crop */
   object-fit: contain;
+  /* Fond blanc des photos produit fondu dans le fond crème (non destructif,
+     ne découpe ni le plat, ni l'assiette, ni le verre, ni les ombres) */
+  mix-blend-mode: multiply;
   display: block;
 }
 
@@ -406,7 +409,7 @@ h1, h2, p { margin-top: 0; }
   border-radius: 20px;
   overflow: hidden;
   background: transparent;
-  padding: 10px;
+  padding: 4px;
 }
 
 .share-row-copy {
@@ -455,10 +458,9 @@ h1, h2, p { margin-top: 0; }
   height: 101px;
   overflow: hidden;
   border-radius: 10px;
-  /* Même fond que la page, image entière avec un peu d'air */
+  /* Fond identique à la page, image entière et généreuse (blanc fondu via multiply) */
   background: transparent;
-  padding: 8px;
-  box-shadow: 0 10px 26px rgba(80, 59, 35, .10);
+  padding: 3px;
 }
 
 .menu-copy { min-width: 0; }
