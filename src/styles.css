@@ -214,13 +214,6 @@ h1, h2, p { margin-top: 0; }
   letter-spacing: -.04em;
 }
 
-.category-title span {
-  margin-bottom: 6px;
-  color: var(--olive-soft);
-  font-size: 16px;
-  white-space: nowrap;
-}
-
 .category-title.share-title {
   margin-top: 30px;
 }
