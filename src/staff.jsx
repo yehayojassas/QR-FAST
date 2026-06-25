@@ -1,23 +1,26 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BellRinging, CheckCircle, Clock, Gear, XCircle } from "@phosphor-icons/react";
+import { BellRinging, CheckCircle, Gear, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
 const formatTime = (ms) =>
   new Date(ms).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
 const TABLE_STATUS_KEY = "clickone_table_statuses";
+// Disposition en 3 rangées décalées (quinconce) : chaque alerte de commande
+// remonte (ou descend, pour la rangée du haut) dans un espace vide, jamais
+// au-dessus d'une autre table. alertBelow = l'alerte s'ouvre vers le bas.
 const TABLES = [
-  { id: "1", seats: 2, shape: "round", x: 12, y: 14 },
-  { id: "2", seats: 4, shape: "square", x: 31, y: 13 },
-  { id: "3", seats: 2, shape: "round", x: 53, y: 14 },
-  { id: "4", seats: 4, shape: "square", x: 74, y: 13 },
-  { id: "5", seats: 4, shape: "square", x: 20, y: 62 },
-  { id: "6", seats: 2, shape: "round", x: 44, y: 58 },
-  { id: "7", seats: 4, shape: "square", x: 67, y: 58 },
-  { id: "8", seats: 2, shape: "round", x: 86, y: 60 },
-  { id: "9", seats: 4, shape: "square", x: 34, y: 86 },
-  { id: "10", seats: 4, shape: "square", x: 62, y: 86 },
+  { id: "1", seats: 2, shape: "round", x: 13, y: 16, alertBelow: true },
+  { id: "2", seats: 4, shape: "square", x: 38, y: 16, alertBelow: true },
+  { id: "3", seats: 2, shape: "round", x: 62, y: 16, alertBelow: true },
+  { id: "4", seats: 4, shape: "square", x: 87, y: 16, alertBelow: true },
+  { id: "5", seats: 4, shape: "square", x: 25, y: 50 },
+  { id: "6", seats: 4, shape: "square", x: 75, y: 50 },
+  { id: "7", seats: 4, shape: "square", x: 13, y: 84 },
+  { id: "8", seats: 2, shape: "round", x: 38, y: 84 },
+  { id: "9", seats: 4, shape: "square", x: 62, y: 84 },
+  { id: "10", seats: 2, shape: "round", x: 87, y: 84 },
 ];
 const STATUS_LABELS = {
   free: "Libre",
@@ -179,6 +182,7 @@ function StaffApp() {
                 <OrderAlert
                   order={latestOrder}
                   count={tableOrders.length}
+                  below={table.alertBelow}
                   onAccept={() => act(latestOrder, "accept")}
                   onReject={() => act(latestOrder, "reject")}
                 />
@@ -190,8 +194,11 @@ function StaffApp() {
                   event.stopPropagation();
                   setSelectedTable((current) => (current === table.id ? null : table.id));
                 }}
-                aria-label={`Table ${table.id}, ${STATUS_LABELS[status]}`}
+                aria-label={`Table ${table.id}, ${STATUS_LABELS[status]}${tableOrders.length ? `, ${tableOrders.length} commande${tableOrders.length > 1 ? "s" : ""} en attente` : ""}`}
               >
+                {tableOrders.length > 0 && (
+                  <span className="table-order-count" aria-hidden="true">{tableOrders.length}</span>
+                )}
                 <span className={`table-status-dot ${status}`} />
                 <span className="chairs" aria-hidden="true">
                   {Array.from({ length: table.seats }).map((_, index) => (
@@ -223,16 +230,17 @@ function StaffApp() {
   );
 }
 
-function OrderAlert({ order, count, onAccept, onReject }) {
+function OrderAlert({ order, count, below, onAccept, onReject }) {
   const previewItems = order.items.slice(0, 2);
   return (
-    <article className="table-order-alert">
+    <article className={`table-order-alert ${below ? "below" : ""} ${count > 1 ? "stacked" : ""}`}>
+      {count > 1 && <span className="alert-stack-badge" aria-hidden="true">+{count - 1}</span>}
       <div className="table-order-alert-head">
         <span className="order-alert-icon">
           <BellRinging size={17} weight="fill" />
         </span>
         <div>
-          <strong>{count > 1 ? `${count} commandes` : "Nouvelle commande"}</strong>
+          <strong>{count > 1 ? `${count} commandes en attente` : "Nouvelle commande"}</strong>
           <small>Table {order.table} · {formatTime(order.createdAt)}</small>
         </div>
       </div>
