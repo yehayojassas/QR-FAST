@@ -1095,6 +1095,9 @@ h1, h2, p { margin-top: 0; }
 }
 
 .table-zone.has-order { z-index: 5; }
+/* Table dont le menu de statut est ouvert : passe au-dessus de tout
+   (y compris le tiroir des commandes en vue mobile). */
+.table-zone.is-active { z-index: 40; }
 
 .restaurant-table {
   position: relative;
@@ -1235,32 +1238,48 @@ h1, h2, p { margin-top: 0; }
 
 .table-status-popover {
   position: absolute;
-  z-index: 8;
-  top: calc(100% + 30px);
-  left: 50%;
-  transform: translateX(-50%);
+  z-index: 30;
   width: 164px;
   padding: 8px;
   border: 1px solid rgba(0,0,0,.08);
   border-radius: 18px;
-  background: rgba(255,255,255,.96);
-  box-shadow: 0 22px 54px rgba(0,0,0,.14);
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 22px 54px rgba(0,0,0,.16);
   display: grid;
   gap: 3px;
 }
 
+/* Sens vertical : sous la table (défaut) ou au-dessus (tables du bas). */
+.table-status-popover.popover-down { top: calc(100% + 22px); }
+.table-status-popover.popover-up { bottom: calc(100% + 22px); }
+
+/* Alignement horizontal pour ne pas sortir de l'écran sur les bords. */
+.table-status-popover.popover-center { left: 50%; transform: translateX(-50%); }
+.table-status-popover.popover-left { left: -14px; }
+.table-status-popover.popover-right { right: -14px; }
+
+/* Flèche, orientée et pointée vers le centre de la table. */
 .table-status-popover::before {
   content: "";
   position: absolute;
-  left: 50%;
-  top: -7px;
   width: 14px;
   height: 14px;
-  transform: translateX(-50%) rotate(45deg);
+  transform: rotate(45deg);
   background: #fff;
+}
+.table-status-popover.popover-down::before {
+  top: -7px;
   border-left: 1px solid rgba(0,0,0,.08);
   border-top: 1px solid rgba(0,0,0,.08);
 }
+.table-status-popover.popover-up::before {
+  bottom: -7px;
+  border-right: 1px solid rgba(0,0,0,.08);
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+.table-status-popover.popover-center::before { left: 50%; margin-left: -7px; }
+.table-status-popover.popover-left::before { left: 54px; }
+.table-status-popover.popover-right::before { right: 54px; }
 
 .table-status-popover button {
   position: relative;
