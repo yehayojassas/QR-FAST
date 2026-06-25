@@ -1,11 +1,33 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BellRinging, CheckCircle, Clock, Gear, XCircle } from "@phosphor-icons/react";
+import { BellRinging, CheckCircle, Gear, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
 const formatTime = (ms) =>
   new Date(ms).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+const TABLE_STATUS_KEY = "clickone_table_statuses";
+// Disposition en 3 rangées décalées (quinconce) : chaque alerte de commande
+// remonte (ou descend, pour la rangée du haut) dans un espace vide, jamais
+// au-dessus d'une autre table. alertBelow = l'alerte s'ouvre vers le bas.
+const TABLES = [
+  { id: "1", seats: 2, shape: "round", x: 13, y: 16, alertBelow: true },
+  { id: "2", seats: 4, shape: "square", x: 38, y: 16, alertBelow: true },
+  { id: "3", seats: 2, shape: "round", x: 62, y: 16, alertBelow: true },
+  { id: "4", seats: 4, shape: "square", x: 87, y: 16, alertBelow: true },
+  { id: "5", seats: 4, shape: "square", x: 25, y: 50 },
+  { id: "6", seats: 4, shape: "square", x: 75, y: 50 },
+  { id: "7", seats: 4, shape: "square", x: 13, y: 84 },
+  { id: "8", seats: 2, shape: "round", x: 38, y: 84 },
+  { id: "9", seats: 4, shape: "square", x: 62, y: 84 },
+  { id: "10", seats: 2, shape: "round", x: 87, y: 84 },
+];
+const STATUS_LABELS = {
+  free: "Libre",
+  occupied: "Occupée",
+  disabled: "Désactivée",
+};
+const STATUS_OPTIONS = ["free", "occupied", "disabled"];
 
 // Adresse du "cerveau" des commandes (le service du menu).
 // Priorité : ?api=... dans l'URL → mémorisé → injecté au build (Render) → même origine.
@@ -39,6 +61,14 @@ function configureMenuAddress() {
 function StaffApp() {
   const [orders, setOrders] = useState([]);
   const [connected, setConnected] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(null);
+  const [manualStatuses, setManualStatuses] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(TABLE_STATUS_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  });
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -80,19 +110,41 @@ function StaffApp() {
     }
   }
 
-  async function act(id, action) {
+  function saveManualStatuses(next) {
+    setManualStatuses(next);
+    localStorage.setItem(TABLE_STATUS_KEY, JSON.stringify(next));
+  }
+
+  function setTableStatus(table, status) {
+    saveManualStatuses({ ...manualStatuses, [String(table)]: status });
+    setSelectedTable(null);
+  }
+
+  async function act(order, action) {
     try {
-      await fetch(`${API_BASE}/api/orders/${id}/${action}`, { method: "POST" });
+      await fetch(`${API_BASE}/api/orders/${order.id}/${action}`, { method: "POST" });
+      if (action === "accept") {
+        saveManualStatuses({ ...manualStatuses, [String(order.table)]: "occupied" });
+      }
     } catch {
       /* ignoré : le flux temps réel resynchronise l'état */
     }
   }
 
   const pending = orders.filter((order) => order.status === "pending");
-  const handled = orders
-    .filter((order) => order.status !== "pending")
-    .slice(-6)
-    .reverse();
+  const acceptedTables = new Set(
+    orders.filter((order) => order.status === "accepted").map((order) => String(order.table)),
+  );
+  const pendingByTable = pending.reduce((acc, order) => {
+    const table = String(order.table);
+    acc[table] = [...(acc[table] || []), order];
+    return acc;
+  }, {});
+
+  function getTableStatus(tableId) {
+    if (pendingByTable[tableId]?.length) return "occupied";
+    return manualStatuses[tableId] || (acceptedTables.has(tableId) ? "occupied" : "free");
+  }
 
   return (
     <div className="staff-view">
@@ -109,81 +161,109 @@ function StaffApp() {
         </div>
       </div>
 
-      {!pending.length && (
-        <div className="staff-empty">
-          <div>
-            <BellRinging size={32} weight="fill" />
-          </div>
-          <h2>Aucune commande en attente</h2>
-          <p>Les nouvelles commandes des clients apparaîtront ici automatiquement, avec un signal sonore.</p>
-        </div>
-      )}
+      <div className="table-status-legend" aria-label="Légende des tables">
+        <span><i className="status-dot free" /> Libre</span>
+        <span><i className="status-dot occupied" /> Occupée</span>
+        <span><i className="status-dot disabled" /> Désactivée</span>
+      </div>
 
-      {pending.map((order) => (
-        <article className="order-card urgent" key={order.id}>
-          <div className="order-card-head">
-            <div>
-              <span className="table-number">{order.table}</span>
-              <div>
-                <strong>Table {order.table}</strong>
-                <small>Reçue à {formatTime(order.createdAt)}</small>
-              </div>
-            </div>
-            <Clock weight="fill" size={26} />
-          </div>
+      <main className="dining-room" onClick={() => setSelectedTable(null)}>
+        {TABLES.map((table) => {
+          const tableOrders = pendingByTable[table.id] || [];
+          const latestOrder = tableOrders[tableOrders.length - 1];
+          const status = getTableStatus(table.id);
+          return (
+            <div
+              className={`table-zone table-zone-${table.id} ${latestOrder ? "has-order" : ""}`}
+              style={{ left: `${table.x}%`, top: `${table.y}%` }}
+              key={table.id}
+            >
+              {latestOrder && (
+                <OrderAlert
+                  order={latestOrder}
+                  count={tableOrders.length}
+                  below={table.alertBelow}
+                  onAccept={() => act(latestOrder, "accept")}
+                  onReject={() => act(latestOrder, "reject")}
+                />
+              )}
 
-          <div className="staff-lines">
-            {order.items.map((item, index) => (
-              <div key={index}>
-                <strong>{item.quantity}×</strong>
-                <b>
-                  {item.name}
-                  {item.size ? ` · ${item.size}` : ""}
-                </b>
-                <span>{money(item.price * item.quantity)}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="order-total">
-            <span>Total</span>
-            <strong>{money(order.total)}</strong>
-          </div>
-
-          <div className="order-actions">
-            <button className="reject" onClick={() => act(order.id, "reject")}>
-              <XCircle weight="fill" size={20} /> Refuser
-            </button>
-            <button className="accept" onClick={() => act(order.id, "accept")}>
-              <CheckCircle weight="fill" size={20} /> Accepter
-            </button>
-          </div>
-        </article>
-      ))}
-
-      {handled.length > 0 && (
-        <div className="staff-history">
-          <h2>Historique récent</h2>
-          {handled.map((order) => (
-            <div className={`history-row ${order.status}`} key={order.id}>
-              <span className="history-table">Table {order.table}</span>
-              <span className="history-status">
-                {order.status === "accepted" ? (
-                  <>
-                    <CheckCircle weight="fill" size={18} /> Acceptée
-                  </>
-                ) : (
-                  <>
-                    <XCircle weight="fill" size={18} /> Refusée
-                  </>
+              <button
+                className={`restaurant-table ${table.shape} status-${status} ${selectedTable === table.id ? "is-selected" : ""}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSelectedTable((current) => (current === table.id ? null : table.id));
+                }}
+                aria-label={`Table ${table.id}, ${STATUS_LABELS[status]}${tableOrders.length ? `, ${tableOrders.length} commande${tableOrders.length > 1 ? "s" : ""} en attente` : ""}`}
+              >
+                {tableOrders.length > 0 && (
+                  <span className="table-order-count" aria-hidden="true">{tableOrders.length}</span>
                 )}
-              </span>
-              <span className="history-total">{money(order.total)}</span>
+                <span className={`table-status-dot ${status}`} />
+                <span className="chairs" aria-hidden="true">
+                  {Array.from({ length: table.seats }).map((_, index) => (
+                    <span className={`chair chair-${index + 1}`} key={index} />
+                  ))}
+                </span>
+                <strong>{table.id}</strong>
+              </button>
+
+              {selectedTable === table.id && (
+                <div className="table-status-popover" onClick={(event) => event.stopPropagation()}>
+                  {STATUS_OPTIONS.map((option) => (
+                    <button
+                      className={option === status ? "active" : ""}
+                      onClick={() => setTableStatus(table.id, option)}
+                      key={option}
+                    >
+                      <i className={`status-dot ${option}`} />
+                      {STATUS_LABELS[option]}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </main>
     </div>
+  );
+}
+
+function OrderAlert({ order, count, below, onAccept, onReject }) {
+  const previewItems = order.items.slice(0, 2);
+  return (
+    <article className={`table-order-alert ${below ? "below" : ""} ${count > 1 ? "stacked" : ""}`}>
+      {count > 1 && <span className="alert-stack-badge" aria-hidden="true">+{count - 1}</span>}
+      <div className="table-order-alert-head">
+        <span className="order-alert-icon">
+          <BellRinging size={17} weight="fill" />
+        </span>
+        <div>
+          <strong>{count > 1 ? `${count} commandes en attente` : "Nouvelle commande"}</strong>
+          <small>Table {order.table} · {formatTime(order.createdAt)}</small>
+        </div>
+      </div>
+      <div className="table-order-lines">
+        {previewItems.map((item, index) => (
+          <span key={index}>
+            {item.quantity}× {item.name}{item.size ? ` · ${item.size}` : ""}
+          </span>
+        ))}
+        {order.items.length > previewItems.length && <span>+ {order.items.length - previewItems.length} autre</span>}
+      </div>
+      <div className="table-order-bottom">
+        <strong>{money(order.total)}</strong>
+        <div>
+          <button className="reject" onClick={onReject} aria-label="Refuser la commande">
+            <XCircle weight="fill" size={18} />
+          </button>
+          <button className="accept" onClick={onAccept} aria-label="Accepter la commande">
+            <CheckCircle weight="fill" size={18} />
+          </button>
+        </div>
+      </div>
+    </article>
   );
 }
 
