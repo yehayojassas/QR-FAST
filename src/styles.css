@@ -60,7 +60,10 @@ h1, h2, p { margin-top: 0; }
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0 auto;
-  background:
+  /* Base crème SOLIDE (jamais transparente) + dégradé décoratif par-dessus.
+     Garantit que le fond couvre tout, y compris derrière la status bar. */
+  background-color: #fffcf6;
+  background-image:
     radial-gradient(circle at 0 0, rgba(113, 124, 92, .12), transparent 130px),
     linear-gradient(180deg, #fffcf6 0%, var(--paper) 52%, #faf4eb 100%);
   position: relative;
@@ -106,6 +109,8 @@ h1, h2, p { margin-top: 0; }
   position: sticky;
   top: 0;
   z-index: 29;
+  /* important pour le calque crème de la status bar ci-dessous */
+  isolation: isolate;
   min-height: 126px;
   display: flex;
   flex-direction: column;
@@ -118,6 +123,20 @@ h1, h2, p { margin-top: 0; }
   padding-right: calc(28px + env(safe-area-inset-right, 0px));
   background: linear-gradient(180deg, rgba(255, 252, 246, .96), rgba(255, 252, 246, .86) 72%, rgba(255, 252, 246, 0));
   backdrop-filter: blur(12px);
+}
+
+/* Calque crème PLEIN couvrant exactement la zone de la status bar (encoche /
+   Dynamic Island). Élimine tout liseré blanc en haut, même au défilement.
+   Hauteur = 0 sur les appareils sans encoche, donc aucun effet ailleurs. */
+.demo-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: #fffcf6;
+  z-index: -1;
 }
 
 .brand {
