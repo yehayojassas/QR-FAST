@@ -25,6 +25,13 @@ let nextId = 1;
 const orders = new Map();
 const subscribers = new Set();
 
+// Statuts des tables pilotés par les serveurs : "free" | "occupied" | "disabled".
+// Une table absente de la map est considérée "free". Une table "disabled"
+// refuse toute nouvelle commande (contrôle de sécurité côté serveur).
+const tableStatuses = new Map();
+const VALID_STATUSES = new Set(["free", "occupied", "disabled"]);
+const statusesObject = () => Object.fromEntries(tableStatuses);
+
 function broadcast(payload) {
   const data = `data: ${JSON.stringify(payload)}\n\n`;
   for (const res of subscribers) {
@@ -44,7 +51,7 @@ app.get("/api/stream", (req, res) => {
   });
   res.write("retry: 3000\n\n");
   // Envoie l'état actuel à la connexion (les commandes déjà en cours).
-  res.write(`data: ${JSON.stringify({ type: "snapshot", orders: [...orders.values()] })}\n\n`);
+  res.write(`data: ${JSON.stringify({ type: "snapshot", orders: [...orders.values()], statuses: statusesObject() })}\n\n`);
   subscribers.add(res);
 
   const keepAlive = setInterval(() => res.write(": ping\n\n"), 25000);
@@ -59,6 +66,10 @@ app.post("/api/orders", (req, res) => {
   const { table, items, total } = req.body || {};
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: "Commande vide" });
+  }
+  // Sécurité : une table désactivée ne peut pas envoyer de commande.
+  if (tableStatuses.get(String(table)) === "disabled") {
+    return res.status(403).json({ error: "table_disabled" });
   }
   const order = {
     id: nextId++,
@@ -91,6 +102,23 @@ app.post("/api/orders/:id/reject", (req, res) => updateStatus(req, res, "rejecte
 
 // Liste des commandes (chargement initial / secours).
 app.get("/api/orders", (_req, res) => res.json([...orders.values()]));
+
+// --- Statuts des tables ---
+// Lecture (page client au chargement / secours).
+app.get("/api/tables/statuses", (_req, res) => res.json(statusesObject()));
+
+// Le serveur change le statut d'une table.
+app.post("/api/tables/:table/status", (req, res) => {
+  const table = String(req.params.table);
+  const { status } = req.body || {};
+  if (!VALID_STATUSES.has(status)) {
+    return res.status(400).json({ error: "Statut invalide" });
+  }
+  if (status === "free") tableStatuses.delete(table);
+  else tableStatuses.set(table, status);
+  broadcast({ type: "tableStatus", table, status });
+  return res.json({ table, status });
+});
 
 // --- Pages ---
 // Ce service (clickone-menu) sert le MENU CLIENT à sa racine.

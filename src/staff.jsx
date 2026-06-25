@@ -6,10 +6,9 @@ import "./styles.css";
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
 const formatTime = (ms) =>
   new Date(ms).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
-const TABLE_STATUS_KEY = "clickone_table_statuses";
-// Disposition en 3 rangées décalées (quinconce) : chaque alerte de commande
-// remonte (ou descend, pour la rangée du haut) dans un espace vide, jamais
-// au-dessus d'une autre table. alertBelow = l'alerte s'ouvre vers le bas.
+// Disposition en 4-2-4 (couloir central) avec rangées décalées : chaque alerte
+// de commande remonte (ou descend, pour la rangée du haut) dans un espace vide,
+// jamais au-dessus d'une autre table. alertBelow = l'alerte s'ouvre vers le bas.
 const TABLES = [
   { id: "1", seats: 2, shape: "round", x: 13, y: 16, alertBelow: true },
   { id: "2", seats: 4, shape: "square", x: 38, y: 16, alertBelow: true },
@@ -62,13 +61,8 @@ function StaffApp() {
   const [orders, setOrders] = useState([]);
   const [connected, setConnected] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
-  const [manualStatuses, setManualStatuses] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(TABLE_STATUS_KEY) || "{}");
-    } catch {
-      return {};
-    }
-  });
+  // Statuts des tables, source de vérité = backend (synchronisé en temps réel).
+  const [statuses, setStatuses] = useState({});
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -79,6 +73,9 @@ function StaffApp() {
       const message = JSON.parse(event.data);
       if (message.type === "snapshot") {
         setOrders(message.orders);
+        if (message.statuses) setStatuses(message.statuses);
+      } else if (message.type === "tableStatus") {
+        setStatuses((current) => ({ ...current, [message.table]: message.status }));
       } else if (message.type === "order") {
         setOrders((current) => {
           const isNew = !current.some((o) => o.id === message.order.id);
@@ -110,22 +107,26 @@ function StaffApp() {
     }
   }
 
-  function saveManualStatuses(next) {
-    setManualStatuses(next);
-    localStorage.setItem(TABLE_STATUS_KEY, JSON.stringify(next));
-  }
-
-  function setTableStatus(table, status) {
-    saveManualStatuses({ ...manualStatuses, [String(table)]: status });
+  // Envoie le nouveau statut au backend (mise à jour optimiste locale + diffusion
+  // temps réel à toutes les pages, y compris les clients).
+  async function setTableStatus(table, status) {
+    setStatuses((current) => ({ ...current, [String(table)]: status }));
     setSelectedTable(null);
+    try {
+      await fetch(`${API_BASE}/api/tables/${table}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      /* ignoré : le flux temps réel resynchronise l'état */
+    }
   }
 
   async function act(order, action) {
     try {
       await fetch(`${API_BASE}/api/orders/${order.id}/${action}`, { method: "POST" });
-      if (action === "accept") {
-        saveManualStatuses({ ...manualStatuses, [String(order.table)]: "occupied" });
-      }
+      if (action === "accept") setTableStatus(order.table, "occupied");
     } catch {
       /* ignoré : le flux temps réel resynchronise l'état */
     }
@@ -142,8 +143,9 @@ function StaffApp() {
   }, {});
 
   function getTableStatus(tableId) {
+    if (statuses[tableId] === "disabled") return "disabled";
     if (pendingByTable[tableId]?.length) return "occupied";
-    return manualStatuses[tableId] || (acceptedTables.has(tableId) ? "occupied" : "free");
+    return statuses[tableId] || (acceptedTables.has(tableId) ? "occupied" : "free");
   }
 
   return (

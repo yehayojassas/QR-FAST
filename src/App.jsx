@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BellRinging, CaretRight, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, X } from '@phosphor-icons/react';
+import { ArrowLeft, BellRinging, CaretRight, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, Warning, X } from '@phosphor-icons/react';
 
 const FALLBACK_PRODUCTS = [
   { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/nachos.png', description: 'Sauce mexicaine fraîche maison' },
@@ -95,6 +95,7 @@ export function App() {
   const [rotation, setRotation] = useState(0);
   const [openCount, setOpenCount] = useState(0);   // nombre de commandes ouvertes côté serveur
   const [countdown, setCountdown] = useState(0);    // secondes restantes avant envoi auto (0 = inactif)
+  const [tableDisabled, setTableDisabled] = useState(false); // table désactivée par un serveur
   const allOrdersRef = useRef(new Map());           // id -> statut (toutes les commandes)
   const queuedRef = useRef(null);                   // commande capturée en attente d'envoi
   const dragStart = useRef(null);
@@ -171,6 +172,12 @@ export function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ table: TABLE, total: payload.total, items: payload.items }),
       });
+      // Sécurité serveur : table désactivée entre-temps.
+      if (response.status === 403) {
+        setTableDisabled(true);
+        flash('Cette table est temporairement désactivée. Veuillez appeler un serveur.');
+        return;
+      }
       if (!response.ok) throw new Error('send failed');
       const data = await response.json();
       setMyOrders((current) => [...current, { id: data.id, status: 'pending' }]);
@@ -181,6 +188,10 @@ export function App() {
 
   function sendOrder() {
     if (!itemCount || countdown > 0) return;
+    if (tableDisabled) {
+      flash('Cette table est temporairement désactivée. Veuillez appeler un serveur.');
+      return;
+    }
     const payload = {
       total,
       items: lines.map((line) => ({ name: line.name, price: line.price, quantity: line.quantity, size: line.size || '' })),
@@ -221,6 +232,7 @@ export function App() {
       if (message.type === 'snapshot') {
         allOrdersRef.current = new Map(message.orders.map((order) => [order.id, order.status]));
         recomputeOpen();
+        setTableDisabled(message.statuses?.[TABLE] === 'disabled');
         // Réconcilie mes commandes persistées avec la réalité du serveur.
         const mine = myOrdersRef.current;
         if (mine.length) {
@@ -238,6 +250,13 @@ export function App() {
           else if (rejected) flash('Votre commande a été refusée');
           setMyOrders(still);
         }
+        return;
+      }
+
+      // Changement de statut d'une table en direct : on ne réagit que pour la
+      // table de ce client.
+      if (message.type === 'tableStatus') {
+        if (String(message.table) === String(TABLE)) setTableDisabled(message.status === 'disabled');
         return;
       }
 
@@ -269,6 +288,7 @@ export function App() {
       </header>
 
       <main className="client-view">
+        {tableDisabled && <section className="status-banner disabled"><div className="status-icon"><Warning weight="fill" /></div><div><strong>Table temporairement désactivée</strong><span>Vous pouvez consulter le menu, mais l’envoi de commande est indisponible. Veuillez appeler un serveur.</span></div></section>}
         {countdown > 0 && <section className="status-banner pending"><div className="status-icon"><Clock weight="fill" /></div><div><strong>Trop de commandes en cours</strong><span>Votre commande part automatiquement dans {countdown}s…</span></div></section>}
         {myOrders.length > 0 && <OrdersBanner orders={myOrders} />}
         <CategoryNav category={category} setCategory={setCategory} />
@@ -309,7 +329,13 @@ export function App() {
       {cartOpen && <div className="overlay" role="dialog" aria-modal="true" aria-label="Votre commande"><button className="overlay-backdrop" onClick={() => setCartOpen(false)} aria-label="Fermer" /><section className="cart-sheet">
         <div className="sheet-topline"><div><p className="eyebrow">Table {TABLE}</p><h2>Votre commande</h2></div><button className="icon-button" onClick={() => setCartOpen(false)} aria-label="Fermer"><X size={22} /></button></div>
         <div className="cart-lines">{lines.map((line) => <div className="cart-line" key={line.id}><img src={line.image} alt="" loading="lazy" decoding="async" /><div><strong>{line.name}</strong><span>{money(line.price)}</span></div><div className="mini-stepper"><button onClick={() => changeQuantity(line, -1)} aria-label="Retirer">{line.quantity === 1 ? <Trash /> : <Minus />}</button><strong>{line.quantity}</strong><button onClick={() => changeQuantity(line, 1)} aria-label="Ajouter"><Plus /></button></div></div>)}</div>
-        <div className="cart-total"><span>Total</span><strong>{money(total)}</strong></div><button className="send-button" onClick={sendOrder} disabled={countdown > 0}><BellRinging size={22} weight="fill" /> {countdown > 0 ? `Envoi dans ${countdown}s` : 'Envoyer aux serveurs'}</button><p className="payment-note">Aucun paiement maintenant. Vous réglerez en partant.</p>
+        <div className="cart-total"><span>Total</span><strong>{money(total)}</strong></div>
+        {tableDisabled ? (
+          <div className="table-disabled-note"><Warning size={20} weight="fill" /><span>Cette table est temporairement désactivée. Veuillez appeler un serveur.</span></div>
+        ) : (
+          <button className="send-button" onClick={sendOrder} disabled={countdown > 0}><BellRinging size={22} weight="fill" /> {countdown > 0 ? `Envoi dans ${countdown}s` : 'Envoyer aux serveurs'}</button>
+        )}
+        <p className="payment-note">Aucun paiement maintenant. Vous réglerez en partant.</p>
       </section></div>}
       {toast && <div className="toast"><CheckCircle weight="fill" /> {toast}</div>}
     </div>
