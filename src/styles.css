@@ -124,10 +124,12 @@ h1, h2, p { margin-top: 0; }
   padding: 0;
 }
 
-.brand span {
-  color: var(--terracotta);
-  font: 600 52px / 1 'Playfair Display', serif;
-  letter-spacing: -.08em;
+.brand img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-height: 48px;
+  max-width: min(300px, 78vw);
 }
 
 .table-pill {

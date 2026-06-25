@@ -283,7 +283,7 @@ export function App() {
       <img className="botanical-deco botanical-deco-top" src="/botanical-corner.png" alt="" aria-hidden="true" />
       <img className="botanical-deco botanical-deco-bottom" src="/botanical-corner.png" alt="" aria-hidden="true" />
       <header className="demo-header">
-        <button className="brand" aria-label="Accueil ClickOne"><span>C.O</span></button>
+        <button className="brand" aria-label="Accueil ClickOne"><img src="/clickone-qrfast-logo.svg" alt="ClickOne" /></button>
         <button className="table-pill" aria-label={`Table ${TABLE}`}>Table {TABLE} <img src="/table-icon-3d.png" alt="" /></button>
       </header>
 
