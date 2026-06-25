@@ -61,6 +61,8 @@ function StaffApp() {
   const [orders, setOrders] = useState([]);
   const [connected, setConnected] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
+  // Placement dynamique du menu de statut pour qu'il reste toujours visible.
+  const [popoverPos, setPopoverPos] = useState({ up: false, align: "center" });
   const [highlightedTable, setHighlightedTable] = useState(null);
   // Statuts des tables, source de vérité = backend (synchronisé en temps réel).
   const [statuses, setStatuses] = useState({});
@@ -136,6 +138,26 @@ function StaffApp() {
     }
   }
 
+  // Ouvre (ou ferme) le menu de statut en calculant son placement pour qu'il
+  // ne sorte jamais de l'écran (tables du bas → vers le haut, bords → décalé).
+  function toggleStatusMenu(tableId, buttonEl) {
+    if (selectedTable === tableId) {
+      setSelectedTable(null);
+      return;
+    }
+    const rect = buttonEl.getBoundingClientRect();
+    const isNarrow = window.innerWidth <= 1100;
+    // En vue mobile, un tiroir occupe le bas : on ouvre vers le haut plus tôt.
+    const up = isNarrow
+      ? rect.bottom > window.innerHeight * 0.52
+      : rect.bottom + 210 > window.innerHeight;
+    let align = "center";
+    if (rect.left < 110) align = "left";
+    else if (window.innerWidth - rect.right < 110) align = "right";
+    setPopoverPos({ up, align });
+    setSelectedTable(tableId);
+  }
+
   // Met brièvement une table en évidence sur le plan (clic depuis le panneau).
   function highlightTable(tableId) {
     setSelectedTable(null);
@@ -189,7 +211,7 @@ function StaffApp() {
             const hasOrder = tableOrders.length > 0;
             return (
               <div
-                className={`table-zone table-zone-${table.id} ${hasOrder ? "has-order" : ""} ${highlightedTable === table.id ? "is-highlighted" : ""}`}
+                className={`table-zone table-zone-${table.id} ${hasOrder ? "has-order" : ""} ${highlightedTable === table.id ? "is-highlighted" : ""} ${selectedTable === table.id ? "is-active" : ""}`}
                 style={{ left: `${table.x}%`, top: `${table.y}%` }}
                 key={table.id}
               >
@@ -197,7 +219,7 @@ function StaffApp() {
                   className={`restaurant-table ${table.shape} status-${status} ${selectedTable === table.id ? "is-selected" : ""}`}
                   onClick={(event) => {
                     event.stopPropagation();
-                    setSelectedTable((current) => (current === table.id ? null : table.id));
+                    toggleStatusMenu(table.id, event.currentTarget);
                   }}
                   aria-label={`Table ${table.id}, ${STATUS_LABELS[status]}${tableOrders.length ? `, ${tableOrders.length} commande${tableOrders.length > 1 ? "s" : ""} en attente` : ""}`}
                 >
@@ -214,7 +236,10 @@ function StaffApp() {
                 </button>
 
                 {selectedTable === table.id && (
-                  <div className="table-status-popover" onClick={(event) => event.stopPropagation()}>
+                  <div
+                    className={`table-status-popover ${popoverPos.up ? "popover-up" : "popover-down"} popover-${popoverPos.align}`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     {STATUS_OPTIONS.map((option) => (
                       <button
                         className={option === status ? "active" : ""}
