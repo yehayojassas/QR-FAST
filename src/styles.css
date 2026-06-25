@@ -128,8 +128,8 @@ h1, h2, p { margin-top: 0; }
   display: block;
   width: auto;
   height: auto;
-  max-height: 48px;
-  max-width: min(300px, 78vw);
+  max-height: 42px;
+  max-width: min(264px, 72vw);
 }
 
 .table-pill {
