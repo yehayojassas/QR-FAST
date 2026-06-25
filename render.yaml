@@ -1,0 +1,37 @@
+# Déploiement Render — DEUX services reliés (https://render.com)
+#
+#  1) clickone-menu     : Web Service Node. Sert le menu client + l'API/cerveau
+#                         des commandes (temps réel). C'est ce lien que vise le QR.
+#  2) clickone-serveurs : Site statique sur une ADRESSE SÉPARÉE, dédié aux serveurs.
+#                         Il se connecte automatiquement au cerveau du service 1
+#                         (adresse injectée au build via VITE_API_BASE).
+#
+# Déploiement : Render → New + → Blueprint → choisir ce dépôt → Apply.
+services:
+  - type: web
+    name: clickone-menu
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+
+  - type: web
+    name: clickone-serveurs
+    runtime: static
+    # index.html EST la page serveurs : la racine de ce site ouvre
+    # directement les commandes (et non le menu client).
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Adresse du cerveau des commandes, récupérée automatiquement
+      # depuis le service du menu.
+      - key: VITE_API_BASE
+        fromService:
+          type: web
+          name: clickone-menu
+          property: host
