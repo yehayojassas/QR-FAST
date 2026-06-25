@@ -6,14 +6,14 @@ import "./styles.css";
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
 const formatTime = (ms) =>
   new Date(ms).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
-// Disposition en 4-2-4 (couloir central) avec rangées décalées : chaque alerte
-// de commande remonte (ou descend, pour la rangée du haut) dans un espace vide,
-// jamais au-dessus d'une autre table. alertBelow = l'alerte s'ouvre vers le bas.
+// Plan de salle en 4-2-4 (couloir central). Les tables ne portent plus de carte
+// de commande : seulement un badge compteur + un halo léger. Le détail des
+// commandes vit dans le panneau latéral "Commandes en attente".
 const TABLES = [
-  { id: "1", seats: 2, shape: "round", x: 13, y: 16, alertBelow: true },
-  { id: "2", seats: 4, shape: "square", x: 38, y: 16, alertBelow: true },
-  { id: "3", seats: 2, shape: "round", x: 62, y: 16, alertBelow: true },
-  { id: "4", seats: 4, shape: "square", x: 87, y: 16, alertBelow: true },
+  { id: "1", seats: 2, shape: "round", x: 13, y: 16 },
+  { id: "2", seats: 4, shape: "square", x: 38, y: 16 },
+  { id: "3", seats: 2, shape: "round", x: 62, y: 16 },
+  { id: "4", seats: 4, shape: "square", x: 87, y: 16 },
   { id: "5", seats: 4, shape: "square", x: 25, y: 50 },
   { id: "6", seats: 4, shape: "square", x: 75, y: 50 },
   { id: "7", seats: 4, shape: "square", x: 13, y: 84 },
@@ -61,9 +61,11 @@ function StaffApp() {
   const [orders, setOrders] = useState([]);
   const [connected, setConnected] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [highlightedTable, setHighlightedTable] = useState(null);
   // Statuts des tables, source de vérité = backend (synchronisé en temps réel).
   const [statuses, setStatuses] = useState({});
   const audioRef = useRef(null);
+  const highlightTimer = useRef(null);
 
   useEffect(() => {
     const source = new EventSource(`${API_BASE}/api/stream`);
@@ -87,6 +89,8 @@ function StaffApp() {
     };
     return () => source.close();
   }, []);
+
+  useEffect(() => () => window.clearTimeout(highlightTimer.current), []);
 
   function beep() {
     try {
@@ -132,6 +136,14 @@ function StaffApp() {
     }
   }
 
+  // Met brièvement une table en évidence sur le plan (clic depuis le panneau).
+  function highlightTable(tableId) {
+    setSelectedTable(null);
+    setHighlightedTable(tableId);
+    window.clearTimeout(highlightTimer.current);
+    highlightTimer.current = window.setTimeout(() => setHighlightedTable(null), 2600);
+  }
+
   const pending = orders.filter((order) => order.status === "pending");
   const acceptedTables = new Set(
     orders.filter((order) => order.status === "accepted").map((order) => String(order.table)),
@@ -169,101 +181,115 @@ function StaffApp() {
         <span><i className="status-dot disabled" /> Désactivée</span>
       </div>
 
-      <main className="dining-room" onClick={() => setSelectedTable(null)}>
-        {TABLES.map((table) => {
-          const tableOrders = pendingByTable[table.id] || [];
-          const latestOrder = tableOrders[tableOrders.length - 1];
-          const status = getTableStatus(table.id);
-          return (
-            <div
-              className={`table-zone table-zone-${table.id} ${latestOrder ? "has-order" : ""}`}
-              style={{ left: `${table.x}%`, top: `${table.y}%` }}
-              key={table.id}
-            >
-              {latestOrder && (
-                <OrderAlert
-                  order={latestOrder}
-                  count={tableOrders.length}
-                  below={table.alertBelow}
-                  onAccept={() => act(latestOrder, "accept")}
-                  onReject={() => act(latestOrder, "reject")}
-                />
-              )}
-
-              <button
-                className={`restaurant-table ${table.shape} status-${status} ${selectedTable === table.id ? "is-selected" : ""}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setSelectedTable((current) => (current === table.id ? null : table.id));
-                }}
-                aria-label={`Table ${table.id}, ${STATUS_LABELS[status]}${tableOrders.length ? `, ${tableOrders.length} commande${tableOrders.length > 1 ? "s" : ""} en attente` : ""}`}
+      <div className="staff-layout">
+        <main className="dining-room" onClick={() => setSelectedTable(null)}>
+          {TABLES.map((table) => {
+            const tableOrders = pendingByTable[table.id] || [];
+            const status = getTableStatus(table.id);
+            const hasOrder = tableOrders.length > 0;
+            return (
+              <div
+                className={`table-zone table-zone-${table.id} ${hasOrder ? "has-order" : ""} ${highlightedTable === table.id ? "is-highlighted" : ""}`}
+                style={{ left: `${table.x}%`, top: `${table.y}%` }}
+                key={table.id}
               >
-                {tableOrders.length > 0 && (
-                  <span className="table-order-count" aria-hidden="true">{tableOrders.length}</span>
-                )}
-                <span className={`table-status-dot ${status}`} />
-                <span className="chairs" aria-hidden="true">
-                  {Array.from({ length: table.seats }).map((_, index) => (
-                    <span className={`chair chair-${index + 1}`} key={index} />
-                  ))}
-                </span>
-                <strong>{table.id}</strong>
-              </button>
+                <button
+                  className={`restaurant-table ${table.shape} status-${status} ${selectedTable === table.id ? "is-selected" : ""}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setSelectedTable((current) => (current === table.id ? null : table.id));
+                  }}
+                  aria-label={`Table ${table.id}, ${STATUS_LABELS[status]}${tableOrders.length ? `, ${tableOrders.length} commande${tableOrders.length > 1 ? "s" : ""} en attente` : ""}`}
+                >
+                  {hasOrder && (
+                    <span className="table-order-count" aria-hidden="true">{tableOrders.length}</span>
+                  )}
+                  <span className={`table-status-dot ${status}`} />
+                  <span className="chairs" aria-hidden="true">
+                    {Array.from({ length: table.seats }).map((_, index) => (
+                      <span className={`chair chair-${index + 1}`} key={index} />
+                    ))}
+                  </span>
+                  <strong>{table.id}</strong>
+                </button>
 
-              {selectedTable === table.id && (
-                <div className="table-status-popover" onClick={(event) => event.stopPropagation()}>
-                  {STATUS_OPTIONS.map((option) => (
-                    <button
-                      className={option === status ? "active" : ""}
-                      onClick={() => setTableStatus(table.id, option)}
-                      key={option}
-                    >
-                      <i className={`status-dot ${option}`} />
-                      {STATUS_LABELS[option]}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </main>
+                {selectedTable === table.id && (
+                  <div className="table-status-popover" onClick={(event) => event.stopPropagation()}>
+                    {STATUS_OPTIONS.map((option) => (
+                      <button
+                        className={option === status ? "active" : ""}
+                        onClick={() => setTableStatus(table.id, option)}
+                        key={option}
+                      >
+                        <i className={`status-dot ${option}`} />
+                        {STATUS_LABELS[option]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </main>
+
+        <aside className="orders-panel" aria-label="Commandes en attente">
+          <div className="orders-panel-head">
+            <h2>Commandes en attente</h2>
+            {pending.length > 0 && <span className="orders-panel-count">{pending.length}</span>}
+          </div>
+          <div className="orders-panel-list">
+            {pending.length === 0 ? (
+              <div className="orders-panel-empty">
+                <BellRinging size={26} weight="fill" />
+                <p>Aucune commande en attente</p>
+                <span>Les nouvelles commandes apparaîtront ici, avec un signal sonore.</span>
+              </div>
+            ) : (
+              [...pending].reverse().map((order) => (
+                <PendingOrderCard
+                  key={order.id}
+                  order={order}
+                  highlighted={highlightedTable === String(order.table)}
+                  onSelect={() => highlightTable(String(order.table))}
+                  onAccept={() => act(order, "accept")}
+                  onReject={() => act(order, "reject")}
+                />
+              ))
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
 
-function OrderAlert({ order, count, below, onAccept, onReject }) {
-  const previewItems = order.items.slice(0, 2);
+function PendingOrderCard({ order, highlighted, onSelect, onAccept, onReject }) {
+  const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const first = order.items[0];
+  const firstSummary = first ? `${first.quantity}× ${first.name}${first.size ? ` · ${first.size}` : ""}` : "";
+  const extra = order.items.length - 1;
   return (
-    <article className={`table-order-alert ${below ? "below" : ""} ${count > 1 ? "stacked" : ""}`}>
-      {count > 1 && <span className="alert-stack-badge" aria-hidden="true">+{count - 1}</span>}
-      <div className="table-order-alert-head">
-        <span className="order-alert-icon">
-          <BellRinging size={17} weight="fill" />
-        </span>
-        <div>
-          <strong>{count > 1 ? `${count} commandes en attente` : "Nouvelle commande"}</strong>
-          <small>Table {order.table} · {formatTime(order.createdAt)}</small>
-        </div>
+    <article className={`pending-card ${highlighted ? "is-highlighted" : ""}`} onClick={onSelect}>
+      <div className="pending-card-top">
+        <span className="pending-table">Table {order.table}</span>
+        <span className="pending-time">{formatTime(order.createdAt)}</span>
       </div>
-      <div className="table-order-lines">
-        {previewItems.map((item, index) => (
-          <span key={index}>
-            {item.quantity}× {item.name}{item.size ? ` · ${item.size}` : ""}
-          </span>
-        ))}
-        {order.items.length > previewItems.length && <span>+ {order.items.length - previewItems.length} autre</span>}
+      <div className="pending-card-summary">
+        <p className="pending-first">
+          {firstSummary}
+          {extra > 0 && <span className="pending-extra"> + {extra} autre{extra > 1 ? "s" : ""}</span>}
+        </p>
+        <p className="pending-meta">
+          {itemCount} article{itemCount > 1 ? "s" : ""} · <strong>{money(order.total)}</strong>
+        </p>
       </div>
-      <div className="table-order-bottom">
-        <strong>{money(order.total)}</strong>
-        <div>
-          <button className="reject" onClick={onReject} aria-label="Refuser la commande">
-            <XCircle weight="fill" size={18} />
-          </button>
-          <button className="accept" onClick={onAccept} aria-label="Accepter la commande">
-            <CheckCircle weight="fill" size={18} />
-          </button>
-        </div>
+      <div className="pending-card-actions">
+        <button className="reject" onClick={(event) => { event.stopPropagation(); onReject(); }}>
+          <XCircle weight="fill" size={18} /> Refuser
+        </button>
+        <button className="accept" onClick={(event) => { event.stopPropagation(); onAccept(); }}>
+          <CheckCircle weight="fill" size={18} /> Accepter
+        </button>
       </div>
     </article>
   );
