@@ -32,6 +32,22 @@ body {
   background: #fffcf6;
 }
 
+/* Calque crème FIXE couvrant en permanence la zone de la status bar (encoche /
+   Dynamic Island), même pendant le défilement : élimine toute bande blanche et
+   toute rupture de couleur en haut. Hauteur = 0 sans encoche (Android/desktop),
+   donc strictement aucun effet ailleurs. */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: #fffcf6;
+  z-index: 40;
+  pointer-events: none;
+}
+
 /* Desktop : fond beige servant de décor au cadre "maquette téléphone" */
 @media (min-width: 768px) {
   body {
@@ -109,8 +125,6 @@ h1, h2, p { margin-top: 0; }
   position: sticky;
   top: 0;
   z-index: 29;
-  /* important pour le calque crème de la status bar ci-dessous */
-  isolation: isolate;
   min-height: 126px;
   display: flex;
   flex-direction: column;
@@ -123,20 +137,6 @@ h1, h2, p { margin-top: 0; }
   padding-right: calc(28px + env(safe-area-inset-right, 0px));
   background: linear-gradient(180deg, rgba(255, 252, 246, .96), rgba(255, 252, 246, .86) 72%, rgba(255, 252, 246, 0));
   backdrop-filter: blur(12px);
-}
-
-/* Calque crème PLEIN couvrant exactement la zone de la status bar (encoche /
-   Dynamic Island). Élimine tout liseré blanc en haut, même au défilement.
-   Hauteur = 0 sur les appareils sans encoche, donc aucun effet ailleurs. */
-.demo-header::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background: #fffcf6;
-  z-index: -1;
 }
 
 .brand {
