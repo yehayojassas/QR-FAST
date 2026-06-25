@@ -951,13 +951,140 @@ h1, h2, p { margin-top: 0; }
 .status-dot.disabled,
 .table-status-dot.disabled { background: #e3b51f; }
 
+.staff-layout {
+  display: flex;
+  gap: 22px;
+  align-items: stretch;
+  margin-top: 18px;
+  height: calc(100vh - 196px);
+  min-height: 520px;
+}
+
 .dining-room {
   position: relative;
-  width: min(1240px, 100%);
-  height: min(760px, calc(100vh - 184px));
-  min-height: 580px;
-  margin: 26px auto 0;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
 }
+
+/* Panneau latéral des commandes en attente. */
+.orders-panel {
+  width: clamp(300px, 25vw, 360px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(20,16,12,.07);
+  border-radius: 24px;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 24px 60px -28px rgba(40,30,20,.3);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.orders-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(20,16,12,.07);
+}
+.orders-panel-head h2 {
+  margin: 0;
+  font: 600 19px/1 'Playfair Display', serif;
+  letter-spacing: -.01em;
+  color: #1c1916;
+}
+.orders-panel-count {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 8px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #e23d3d;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 6px 16px -5px rgba(226,61,61,.6);
+}
+
+.orders-panel-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.orders-panel-empty {
+  margin: auto;
+  padding: 30px 18px;
+  text-align: center;
+  color: #9a958d;
+}
+.orders-panel-empty svg { color: #cbc6bd; }
+.orders-panel-empty p { margin: 12px 0 4px; font-size: 15px; font-weight: 800; color: #6f6a62; }
+.orders-panel-empty span { font-size: 12.5px; line-height: 1.4; }
+
+.pending-card {
+  border: 1px solid rgba(20,16,12,.08);
+  border-left: 4px solid #e23d3d;
+  border-radius: 16px;
+  padding: 13px 14px;
+  background: #fff;
+  box-shadow: 0 10px 26px -16px rgba(40,30,20,.3);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  animation: pending-in .22s cubic-bezier(.2,.8,.3,1.2);
+}
+.pending-card:hover { transform: translateY(-1px); box-shadow: 0 16px 32px -16px rgba(40,30,20,.34); }
+.pending-card.is-highlighted {
+  border-color: rgba(226,61,61,.5);
+  box-shadow: 0 0 0 3px rgba(226,61,61,.16), 0 16px 32px -16px rgba(226,61,61,.4);
+}
+
+@keyframes pending-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pending-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pending-table { font-size: 16px; font-weight: 900; color: #1c1916; letter-spacing: -.01em; }
+.pending-time { font-size: 12px; font-weight: 800; color: #8c877f; }
+
+.pending-card-summary { margin: 7px 0 11px; }
+.pending-first { margin: 0; font-size: 13px; font-weight: 700; color: #3a352f; }
+.pending-extra { color: #8c877f; font-weight: 700; }
+.pending-meta { margin: 4px 0 0; font-size: 12.5px; color: #6f6a62; font-weight: 700; }
+.pending-meta strong { color: #1c1916; }
+
+.pending-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 8px;
+}
+.pending-card-actions button {
+  min-height: 38px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.pending-card-actions .reject { color: #d64242; background: #fff0f0; }
+.pending-card-actions .reject:hover { background: #ffe3e3; }
+.pending-card-actions .accept { color: #fff; background: #18a767; }
+.pending-card-actions .accept:hover { background: #15945b; }
 
 .table-zone {
   position: absolute;
@@ -1026,18 +1153,27 @@ h1, h2, p { margin-top: 0; }
 .restaurant-table.status-disabled strong { color: #b6b2ac; }
 .restaurant-table.status-disabled .chair { opacity: .5; }
 
-.table-zone.has-order .restaurant-table::after {
-  content: "";
-  position: absolute;
-  inset: -14px;
-  border: 2px solid rgba(226,61,61,.3);
-  border-radius: inherit;
-  animation: table-pulse 1.5s ease-out infinite;
+/* Halo léger rouge autour d'une table qui a une commande en attente. */
+.table-zone.has-order .restaurant-table {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 0 0 4px rgba(226,61,61,.16),
+    0 18px 44px -14px rgba(226,61,61,.42);
+  animation: table-halo 1.8s ease-in-out infinite;
 }
 
-@keyframes table-pulse {
-  0% { transform: scale(.94); opacity: .9; }
-  100% { transform: scale(1.16); opacity: 0; }
+@keyframes table-halo {
+  0%, 100% { box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 0 0 4px rgba(226,61,61,.14), 0 18px 44px -14px rgba(226,61,61,.4); }
+  50% { box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 0 0 7px rgba(226,61,61,.2), 0 18px 44px -14px rgba(226,61,61,.5); }
+}
+
+/* Mise en évidence brève quand on clique la commande dans le panneau. */
+.table-zone.is-highlighted { z-index: 6; }
+.table-zone.is-highlighted .restaurant-table {
+  transform: translateY(-3px) scale(1.06);
+  border-color: rgba(226,61,61,.55);
+  box-shadow: 0 0 0 5px rgba(226,61,61,.22), 0 26px 54px -16px rgba(226,61,61,.5);
+  animation: none;
 }
 
 .table-status-dot {
@@ -1138,155 +1274,27 @@ h1, h2, p { margin-top: 0; }
 .table-status-popover button:hover,
 .table-status-popover button.active { background: #f5f5f5; color: #161616; }
 
-.table-order-alert {
-  position: absolute;
-  z-index: 9;
-  left: 50%;
-  bottom: calc(100% + 24px);
-  width: clamp(168px, 12vw, 178px);
-  transform: translateX(-50%);
-  border: 1px solid rgba(226,61,61,.22);
-  border-top: 3px solid #e23d3d;
-  border-radius: 20px;
-  padding: 14px;
-  color: #211f1e;
-  background: rgba(255,255,255,.99);
-  box-shadow:
-    0 30px 70px -22px rgba(119,36,23,.5),
-    0 8px 24px -10px rgba(0,0,0,.18);
-  animation: alert-in .22s cubic-bezier(.2,.8,.3,1.2);
-}
-
-@keyframes alert-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(.96); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-}
-
-/* Flèche pointant vers la table (vers le bas par défaut). */
-.table-order-alert::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  width: 16px;
-  height: 16px;
-  transform: translateX(-50%) rotate(45deg);
-  background: #fff;
-  border-right: 1px solid rgba(226,61,61,.16);
-  border-bottom: 1px solid rgba(226,61,61,.16);
-}
-
-/* Rangée du haut : l'alerte s'ouvre vers le bas, flèche au-dessus. */
-.table-order-alert.below {
-  bottom: auto;
-  top: calc(100% + 26px);
-  border-top: 1px solid rgba(226,61,61,.22);
-  border-bottom: 3px solid #e23d3d;
-}
-.table-order-alert.below::after {
-  bottom: auto;
-  top: -8px;
-  border: 0;
-  border-left: 1px solid rgba(226,61,61,.16);
-  border-top: 1px solid rgba(226,61,61,.16);
-}
-
-/* Effet "pile" quand plusieurs commandes attendent sur la même table. */
-.table-order-alert.stacked::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: #fff;
-  border: 1px solid rgba(226,61,61,.18);
-  transform: translateY(6px) scale(.965);
-  box-shadow: 0 16px 36px -18px rgba(119,36,23,.4);
-}
-
-.alert-stack-badge {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  min-width: 28px;
-  height: 24px;
-  padding: 0 8px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  border: 2px solid #fff;
-  background: #e23d3d;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  box-shadow: 0 6px 14px -4px rgba(226,61,61,.6);
-}
-
-.table-order-alert-head {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  align-items: center;
-}
-
-.order-alert-icon {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #fff;
-  background: #e45032;
-  box-shadow: 0 0 0 7px rgba(228,80,50,.12);
-}
-
-.table-order-alert strong { font-size: 14px; }
-.table-order-alert small { display: block; margin-top: 2px; color: #777; font-size: 11px; font-weight: 800; }
-.table-order-lines {
-  margin: 10px 0;
-  padding: 9px 0;
-  border-top: 1px solid #eeeeee;
-  border-bottom: 1px solid #eeeeee;
-  display: grid;
-  gap: 4px;
-  color: #525252;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.table-order-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.table-order-bottom > div { display: flex; align-items: center; gap: 7px; }
-.table-order-bottom button {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-}
-.table-order-bottom .reject { color: #d64242; background: #fff0f0; }
-.table-order-bottom .accept { color: #fff; background: #18a767; }
-
-/* Tablette portrait / mobile : on quitte le plan libre pour une grille
-   verticale aérée, plus lisible sur écran étroit. */
+/* Tablette / mobile : le plan passe en grille verticale et le panneau des
+   commandes devient un tiroir fixe en bas, toujours lisible. */
 @media (max-width: 1100px) {
   .staff-view { padding: 28px 18px 64px; overflow: auto; }
   .staff-title { align-items: flex-start; gap: 18px; }
   .staff-view .staff-title h1 { font-size: 42px; }
   .table-status-legend { margin-top: 20px; flex-wrap: wrap; border-radius: 22px; row-gap: 10px; }
-  .dining-room {
+
+  .staff-layout {
+    display: block;
     height: auto;
     min-height: 0;
-    margin-top: 196px;
+    margin-top: 28px;
+  }
+  .dining-room {
+    height: auto;
     display: grid;
     grid-template-columns: repeat(2, minmax(130px, 1fr));
-    gap: 184px 40px;
-    padding-bottom: 90px;
+    gap: 70px 40px;
+    /* Laisse la place au tiroir fixe en bas. */
+    padding-bottom: 46vh;
   }
   .table-zone {
     position: relative;
@@ -1294,29 +1302,40 @@ h1, h2, p { margin-top: 0; }
     top: auto !important;
     transform: none;
   }
-  /* En grille, toutes les alertes s'ouvrent vers le haut pour rester dans
-     l'espace libre au-dessus de chaque table. */
-  .table-order-alert,
-  .table-order-alert.below {
-    width: min(244px, calc(100vw - 42px));
-    bottom: calc(100% + 24px);
-    top: auto;
-    border-top: 3px solid #e23d3d;
-    border-bottom: 1px solid rgba(226,61,61,.22);
-  }
-  .table-order-alert.below::after,
-  .table-order-alert::after {
-    top: auto;
-    bottom: -8px;
+  .table-zone.is-highlighted .restaurant-table { transform: scale(1.06); }
+
+  /* Tiroir des commandes ancré en bas de l'écran. */
+  .orders-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 48vh;
     border: 0;
-    border-right: 1px solid rgba(226,61,61,.16);
-    border-bottom: 1px solid rgba(226,61,61,.16);
+    border-top: 1px solid rgba(20,16,12,.1);
+    border-radius: 22px 22px 0 0;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 -18px 50px -24px rgba(40,30,20,.45);
+    z-index: 20;
+  }
+  .orders-panel-list {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .pending-card {
+    flex: 0 0 78%;
+    max-width: 320px;
+    scroll-snap-align: start;
   }
 }
 
 @media (max-width: 560px) {
   .staff-title { flex-direction: column; }
-  .dining-room { grid-template-columns: 1fr; gap: 150px; }
+  .dining-room { grid-template-columns: 1fr; gap: 56px; }
+  .pending-card { flex-basis: 86%; }
 }
 
 .ticket {
