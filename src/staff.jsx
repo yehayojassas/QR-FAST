@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BellRinging, CheckCircle, Gear, XCircle } from "@phosphor-icons/react";
+import { BellRinging, CaretRight, CheckCircle, Gear, X, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
@@ -64,6 +64,8 @@ function StaffApp() {
   // Placement dynamique du menu de statut pour qu'il reste toujours visible.
   const [popoverPos, setPopoverPos] = useState({ up: false, align: "center" });
   const [highlightedTable, setHighlightedTable] = useState(null);
+  // Commande dont on affiche le détail complet (modal). null = fermée.
+  const [detailId, setDetailId] = useState(null);
   // Statuts des tables, source de vérité = backend (synchronisé en temps réel).
   const [statuses, setStatuses] = useState({});
   const audioRef = useRef(null);
@@ -166,7 +168,20 @@ function StaffApp() {
     highlightTimer.current = window.setTimeout(() => setHighlightedTable(null), 2600);
   }
 
+  // Clic sur une commande du panneau : ouvre le détail complet + met la table
+  // en évidence sur le plan.
+  function openDetail(order) {
+    setDetailId(order.id);
+    highlightTable(String(order.table));
+  }
+
   const pending = orders.filter((order) => order.status === "pending");
+  // Commande affichée en détail (toujours relue depuis l'état à jour). Si elle
+  // n'est plus en attente (acceptée/refusée ailleurs), la modal se ferme.
+  const detailOrder = detailId == null ? null : pending.find((order) => order.id === detailId);
+  useEffect(() => {
+    if (detailId != null && !pending.some((order) => order.id === detailId)) setDetailId(null);
+  }, [detailId, pending]);
   const acceptedTables = new Set(
     orders.filter((order) => order.status === "accepted").map((order) => String(order.table)),
   );
@@ -275,7 +290,7 @@ function StaffApp() {
                   key={order.id}
                   order={order}
                   highlighted={highlightedTable === String(order.table)}
-                  onSelect={() => highlightTable(String(order.table))}
+                  onSelect={() => openDetail(order)}
                   onAccept={() => act(order, "accept")}
                   onReject={() => act(order, "reject")}
                 />
@@ -284,6 +299,50 @@ function StaffApp() {
           </div>
         </aside>
       </div>
+
+      {detailOrder && (
+        <div className="order-detail-overlay" role="dialog" aria-modal="true" aria-label={`Détail commande table ${detailOrder.table}`}>
+          <button className="order-detail-backdrop" onClick={() => setDetailId(null)} aria-label="Fermer le détail" />
+          <section className="order-detail">
+            <header className="order-detail-head">
+              <div>
+                <span className="order-detail-table">Table {detailOrder.table}</span>
+                <span className="order-detail-time">Reçue à {formatTime(detailOrder.createdAt)}</span>
+              </div>
+              <button className="order-detail-close" onClick={() => setDetailId(null)} aria-label="Fermer">
+                <X size={20} />
+              </button>
+            </header>
+
+            <div className="order-detail-lines">
+              {detailOrder.items.map((item, index) => (
+                <div className="order-detail-line" key={index}>
+                  <span className="odl-qty">{item.quantity}×</span>
+                  <span className="odl-name">
+                    {item.name}
+                    {item.size ? <small> · {item.size}</small> : null}
+                  </span>
+                  <span className="odl-price">{money(item.price * item.quantity)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="order-detail-total">
+              <span>Total</span>
+              <strong>{money(detailOrder.total)}</strong>
+            </div>
+
+            <div className="order-detail-actions">
+              <button className="reject" onClick={() => { act(detailOrder, "reject"); setDetailId(null); }}>
+                <XCircle weight="fill" size={20} /> Refuser
+              </button>
+              <button className="accept" onClick={() => { act(detailOrder, "accept"); setDetailId(null); }}>
+                <CheckCircle weight="fill" size={20} /> Accepter
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
@@ -294,10 +353,13 @@ function PendingOrderCard({ order, highlighted, onSelect, onAccept, onReject }) 
   const firstSummary = first ? `${first.quantity}× ${first.name}${first.size ? ` · ${first.size}` : ""}` : "";
   const extra = order.items.length - 1;
   return (
-    <article className={`pending-card ${highlighted ? "is-highlighted" : ""}`} onClick={onSelect}>
+    <article className={`pending-card ${highlighted ? "is-highlighted" : ""}`} onClick={onSelect} role="button" tabIndex={0} title="Voir le détail">
       <div className="pending-card-top">
         <span className="pending-table">Table {order.table}</span>
-        <span className="pending-time">{formatTime(order.createdAt)}</span>
+        <span className="pending-top-right">
+          <span className="pending-time">{formatTime(order.createdAt)}</span>
+          <CaretRight className="pending-caret" size={15} weight="bold" />
+        </span>
       </div>
       <div className="pending-card-summary">
         <p className="pending-first">
