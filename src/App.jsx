@@ -403,8 +403,10 @@ function CategoryTitle({ category, isSharePage }) {
 }
 
 function ProductStepper({ product, cart, add, changeQuantity, className = '' }) {
+  // className (ex: "share-add") ne s'applique qu'au bouton "ajouter".
+  // Une fois dans le panier, le stepper reste identique aux autres produits.
   return cart[product.id] ? (
-    <div className={`mini-stepper ${className}`}>
+    <div className="mini-stepper">
       <button onClick={() => changeQuantity(product, -1)} aria-label="Retirer"><Minus /></button>
       <strong>{cart[product.id]}</strong>
       <button onClick={() => changeQuantity(product, 1)} aria-label="Ajouter"><Plus /></button>
