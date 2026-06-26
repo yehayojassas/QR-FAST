@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BellRinging, CaretRight, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, Warning, X } from '@phosphor-icons/react';
 
 const FALLBACK_PRODUCTS = [
-  { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/nachos.png', description: 'Sauce mexicaine fraîche maison' },
-  { id: 6, name: 'Salade Tricolore', price: 19, category: 'Salades', image: '/products/tricolore.png', description: 'Roquette, tomate cerise, burrata' },
-  { id: 2, name: 'Mini arancini', price: 14, category: 'Entrées', image: '/products/arancini.png', description: 'Bouchées de riz croustillantes' },
-  { id: 7, name: 'Carbonara', price: 25, category: 'Plats', image: '/products/carbonara.png', description: 'Spaghetti, guanciale, œuf et pecorino' },
-  { id: 3, name: 'Planchette maison', price: 28, category: 'À partager', image: '/products/planchette.png', description: 'Charcuteries & fromages' },
-  { id: 8, name: 'Mojito', price: 16, category: 'Boissons', image: '/products/mojito.png', description: 'Rhum, menthe, citron et soda' },
-  { id: 4, name: 'Pimientos de Padrón', price: 12, category: 'Entrées', image: '/products/pimientos.png', description: 'Fleur de sel' },
-  { id: 5, name: 'Filets de perche', price: 39, category: 'Plats', image: '/products/perche.png', description: 'Frites, sauce tartare maison, salade verte' },
+  { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/catalog/nachos-a-partager.jpg', description: 'Sauce mexicaine fraîche maison' },
+  { id: 6, name: 'Salade Tricolore', price: 19, category: 'Salades', image: '/products/catalog/salade-tricolore.jpg', description: 'Roquette, tomate cerise, burrata' },
+  { id: 2, name: 'Mini arancini', price: 14, category: 'Entrées', image: '/products/catalog/mini-arancini.jpg', description: 'Bouchées de riz croustillantes' },
+  { id: 7, name: 'Carbonara', price: 25, category: 'Plats', image: '/products/catalog/carbonara.jpg', description: 'Spaghetti, guanciale, œuf et pecorino' },
+  { id: 3, name: 'Planchette maison', price: 28, category: 'À partager', image: '/products/catalog/planchette-maison.jpg', description: 'Charcuteries & fromages' },
+  { id: 8, name: 'Mojito', price: 16, category: 'Boissons', image: '/products/catalog/mojito.jpg', description: 'Rhum, menthe, citron et soda' },
+  { id: 4, name: 'Pimientos de Padrón', price: 12, category: 'Entrées', image: '/products/catalog/pimientos-de-padron-frits.jpg', description: 'Fleur de sel' },
+  { id: 5, name: 'Filets de perche', price: 39, category: 'Plats', image: '/products/catalog/filets-de-perche-meuniere.jpg', description: 'Frites, sauce tartare maison, salade verte' },
 ];
 
 const CATEGORIES = ['À partager', 'Plats', 'Salades', 'Pâtes', 'Enfants', 'Desserts', 'Vins', 'Bières', 'Boissons', 'Cocktails', 'Spiritueux'];
@@ -26,15 +26,15 @@ const loadStored = (key, fallback) => {
 };
 
 const EXACT_IMAGES = {
-  'Nachos à partager': '/products/nachos.png',
-  'Mini arancini': '/products/arancini.png',
-  'Planchette maison': '/products/planchette.png',
-  'Pimientos de Padrón frits': '/products/pimientos.png',
-  'Filets de perche meunière': '/products/perche.png',
-  'Salade Tricolore': '/products/tricolore.png',
-  Carbonara: '/products/carbonara.png',
-  Mojito: '/products/mojito.png',
-  Tiramisu: '/products/dessert.png',
+  'Nachos à partager': '/products/catalog/nachos-a-partager.jpg',
+  'Mini arancini': '/products/catalog/mini-arancini.jpg',
+  'Planchette maison': '/products/catalog/planchette-maison.jpg',
+  'Pimientos de Padrón frits': '/products/catalog/pimientos-de-padron-frits.jpg',
+  'Filets de perche meunière': '/products/catalog/filets-de-perche-meuniere.jpg',
+  'Salade Tricolore': '/products/catalog/salade-tricolore.jpg',
+  Carbonara: '/products/catalog/carbonara.jpg',
+  Mojito: '/products/catalog/mojito.jpg',
+  Tiramisu: '/products/catalog/tiramisu.jpg',
 };
 
 function displayCategory(category) {
