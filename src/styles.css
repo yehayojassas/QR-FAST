@@ -603,19 +603,20 @@ h1, h2, p { margin-top: 0; }
   overflow: hidden;
   border: 0;
   border-radius: 999px;
-  background:
-    linear-gradient(135deg, rgba(38, 62, 44, 0.96), rgba(23, 37, 27, 0.98));
-  color: #fffaf1;
+  /* Fond blanc / crème très clair */
+  background: #fffdf9;
+  color: #161616;
   box-shadow:
-    0 18px 46px rgba(38, 62, 44, 0.28),
-    0 8px 22px rgba(201, 77, 37, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    0 14px 34px rgba(40, 30, 20, 0.14),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 
+/* Contour lumineux subtil : traits gris/noir très légers qui tournent. */
 .cart-glow-button::before {
   content: "";
   position: absolute;
@@ -625,24 +626,25 @@ h1, h2, p { margin-top: 0; }
     conic-gradient(
       from 0deg,
       transparent 0deg,
-      rgba(201, 77, 37, 0.0) 70deg,
-      rgba(201, 77, 37, 0.95) 110deg,
-      rgba(255, 197, 129, 0.95) 145deg,
-      transparent 190deg,
+      rgba(0, 0, 0, 0.0) 70deg,
+      rgba(0, 0, 0, 0.26) 112deg,
+      rgba(120, 120, 120, 0.42) 146deg,
+      transparent 192deg,
       transparent 360deg
     );
   animation: cartGlowSpin 2.6s linear infinite;
 }
 
+/* Face visible blanche/crème (laisse apparaître un fin liseré lumineux). */
 .cart-glow-button::after {
   content: "";
   position: absolute;
-  inset: 2px;
+  inset: 1.5px;
   z-index: -1;
   border-radius: inherit;
   background:
-    radial-gradient(circle at 28% 0%, rgba(255, 250, 241, 0.16), transparent 34%),
-    linear-gradient(135deg, #263e2c, #17251b);
+    radial-gradient(circle at 28% 0%, rgba(255, 255, 255, 0.9), transparent 42%),
+    linear-gradient(135deg, #ffffff, #fffaf1);
 }
 
 .cart-glow-border {
@@ -650,7 +652,7 @@ h1, h2, p { margin-top: 0; }
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  border: 1px solid rgba(255, 250, 241, 0.14);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .cart-glow-light {
@@ -663,7 +665,7 @@ h1, h2, p { margin-top: 0; }
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 250, 241, 0.16),
+    rgba(0, 0, 0, 0.05),
     transparent
   );
   animation: cartGlowSweep 2.8s ease-in-out infinite;
@@ -677,6 +679,7 @@ h1, h2, p { margin-top: 0; }
   font-weight: 800;
   font-style: italic;
   letter-spacing: 0;
+  color: #161616;
 }
 
 .cart-glow-count {
@@ -696,7 +699,7 @@ h1, h2, p { margin-top: 0; }
   font-size: 12px;
   font-weight: 900;
   box-shadow:
-    0 0 0 3px rgba(255, 250, 241, 0.12),
+    0 0 0 3px #fffdf9,
     0 8px 18px rgba(201, 77, 37, 0.34);
 }
 

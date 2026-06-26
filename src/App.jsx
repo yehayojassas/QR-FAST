@@ -313,7 +313,7 @@ export function App() {
           />
         )}
         {!visibleProducts.length && <div className="empty-state">Aucun produit ne correspond à votre recherche.</div>}
-        {itemCount > 0 && (
+        {itemCount > 0 && !cartOpen && (
           <div className="cart-glow-wrap">
             <button className="cart-glow-button" onClick={() => setCartOpen(true)}>
               <span className="cart-glow-border" />
