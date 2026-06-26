@@ -325,9 +325,9 @@ h1, h2, p { margin-top: 0; }
   max-height: 100%;
   /* Plats/boissons toujours entiers : jamais de crop */
   object-fit: contain;
-  /* Fond blanc des photos produit fondu dans le fond crème (non destructif,
-     ne découpe ni le plat, ni l'assiette, ni le verre, ni les ombres) */
-  mix-blend-mode: multiply;
+  /* Le fondu du fond blanc dans le crème est désormais "cuit" dans les images
+     (dossiers /products/clean & /products/catalog-clean) : rendu identique sur
+     Safari iOS et desktop, sans dépendre de mix-blend-mode. */
   display: block;
 }
 
