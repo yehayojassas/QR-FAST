@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BellRinging, CaretRight, CheckCircle, Gear, X, XCircle } from "@phosphor-icons/react";
+import { BellRinging, CaretRight, CheckCircle, ForkKnife, Gear, X, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
@@ -66,6 +66,8 @@ function StaffApp() {
   const [highlightedTable, setHighlightedTable] = useState(null);
   // Commande dont on affiche le détail complet (modal). null = fermée.
   const [detailId, setDetailId] = useState(null);
+  // Table dont on consulte les plats servis (modal "Voir la table"). null = fermée.
+  const [tableViewId, setTableViewId] = useState(null);
   // Statuts des tables, source de vérité = backend (synchronisé en temps réel).
   const [statuses, setStatuses] = useState({});
   const audioRef = useRef(null);
@@ -82,6 +84,10 @@ function StaffApp() {
         if (message.statuses) setStatuses(message.statuses);
       } else if (message.type === "tableStatus") {
         setStatuses((current) => ({ ...current, [message.table]: message.status }));
+      } else if (message.type === "ordersCleared") {
+        // Table remise "Libre" : on retire les commandes servies effacées.
+        const removed = new Set(message.ids);
+        setOrders((current) => current.filter((order) => !removed.has(order.id)));
       } else if (message.type === "order") {
         setOrders((current) => {
           const isNew = !current.some((o) => o.id === message.order.id);
@@ -182,14 +188,32 @@ function StaffApp() {
   useEffect(() => {
     if (detailId != null && !pending.some((order) => order.id === detailId)) setDetailId(null);
   }, [detailId, pending]);
-  const acceptedTables = new Set(
-    orders.filter((order) => order.status === "accepted").map((order) => String(order.table)),
-  );
+  // Commandes acceptées (servies / en cours) regroupées par table.
+  const acceptedByTable = orders
+    .filter((order) => order.status === "accepted")
+    .reduce((acc, order) => {
+      const table = String(order.table);
+      acc[table] = [...(acc[table] || []), order];
+      return acc;
+    }, {});
+  const acceptedTables = new Set(Object.keys(acceptedByTable));
   const pendingByTable = pending.reduce((acc, order) => {
     const table = String(order.table);
     acc[table] = [...(acc[table] || []), order];
     return acc;
   }, {});
+
+  // Modal "Voir la table" : commandes servies de la table consultée. Se ferme
+  // automatiquement si la table n'a plus de commande (remise en "Libre").
+  const tableViewOrders = tableViewId == null ? [] : (acceptedByTable[tableViewId] || []);
+  useEffect(() => {
+    if (tableViewId != null && !(acceptedByTable[tableViewId]?.length)) setTableViewId(null);
+  }, [tableViewId, acceptedByTable]);
+
+  function openTableView(tableId) {
+    setSelectedTable(null);
+    setTableViewId(tableId);
+  }
 
   function getTableStatus(tableId) {
     if (statuses[tableId] === "disabled") return "disabled";
@@ -265,6 +289,12 @@ function StaffApp() {
                         {STATUS_LABELS[option]}
                       </button>
                     ))}
+                    {acceptedByTable[table.id]?.length > 0 && (
+                      <button className="popover-view-table" onClick={() => openTableView(table.id)}>
+                        <ForkKnife size={16} weight="fill" />
+                        Voir la table
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -343,6 +373,72 @@ function StaffApp() {
           </section>
         </div>
       )}
+
+      {tableViewId != null && tableViewOrders.length > 0 && (
+        <TableView
+          tableId={tableViewId}
+          orders={tableViewOrders}
+          onClose={() => setTableViewId(null)}
+          onFree={() => { setTableStatus(tableViewId, "free"); setTableViewId(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Modal "Voir la table" : agrège les plats servis (commandes acceptées) de la
+// table, regroupés par article + taille, avec total et heures.
+function TableView({ tableId, orders, onClose, onFree }) {
+  const groups = new Map();
+  for (const order of orders) {
+    for (const item of order.items) {
+      const key = `${item.name}__${item.size || ""}`;
+      const existing = groups.get(key);
+      if (existing) existing.quantity += item.quantity;
+      else groups.set(key, { name: item.name, size: item.size || "", price: item.price, quantity: item.quantity });
+    }
+  }
+  const lines = [...groups.values()];
+  const total = orders.reduce((sum, order) => sum + order.total, 0);
+  const times = orders.map((order) => formatTime(order.createdAt));
+  return (
+    <div className="order-detail-overlay" role="dialog" aria-modal="true" aria-label={`Plats servis table ${tableId}`}>
+      <button className="order-detail-backdrop" onClick={onClose} aria-label="Fermer" />
+      <section className="order-detail table-view">
+        <header className="order-detail-head">
+          <div>
+            <span className="order-detail-table">Table {tableId}</span>
+            <span className="order-detail-time">
+              Servie · {orders.length} commande{orders.length > 1 ? "s" : ""} · {times.join(", ")}
+            </span>
+          </div>
+          <button className="order-detail-close" onClick={onClose} aria-label="Fermer">
+            <X size={20} />
+          </button>
+        </header>
+
+        <div className="order-detail-lines">
+          {lines.map((line, index) => (
+            <div className="order-detail-line" key={index}>
+              <span className="odl-qty">{line.quantity}×</span>
+              <span className="odl-name">
+                {line.name}
+                {line.size ? <small> · {line.size}</small> : null}
+              </span>
+              <span className="odl-price">{money(line.price * line.quantity)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="order-detail-total">
+          <span>Total table</span>
+          <strong>{money(total)}</strong>
+        </div>
+
+        <div className="order-detail-actions table-view-actions">
+          <button className="free" onClick={onFree}>Libérer la table</button>
+        </div>
+      </section>
     </div>
   );
 }

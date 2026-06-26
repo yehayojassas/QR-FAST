@@ -117,6 +117,19 @@ app.post("/api/tables/:table/status", (req, res) => {
   if (status === "free") tableStatuses.delete(table);
   else tableStatuses.set(table, status);
   broadcast({ type: "tableStatus", table, status });
+
+  // Remettre une table en "Libre" = les clients sont partis : on efface les
+  // commandes acceptées (servies) attachées à cette table.
+  if (status === "free") {
+    const cleared = [];
+    for (const [id, order] of orders) {
+      if (String(order.table) === table && order.status === "accepted") {
+        orders.delete(id);
+        cleared.push(id);
+      }
+    }
+    if (cleared.length) broadcast({ type: "ordersCleared", table, ids: cleared });
+  }
   return res.json({ table, status });
 });
 
