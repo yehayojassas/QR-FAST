@@ -173,7 +173,7 @@ export function App() {
       // Sécurité serveur : table désactivée entre-temps.
       if (response.status === 403) {
         setTableDisabled(true);
-        flash('Cette table est temporairement désactivée. Veuillez appeler un serveur.');
+        flash('Cette table est réservée. Veuillez appeler un serveur.');
         return;
       }
       if (!response.ok) throw new Error('send failed');
@@ -187,7 +187,7 @@ export function App() {
   function sendOrder() {
     if (!itemCount || countdown > 0) return;
     if (tableDisabled) {
-      flash('Cette table est temporairement désactivée. Veuillez appeler un serveur.');
+      flash('Cette table est réservée. Veuillez appeler un serveur.');
       return;
     }
     const payload = {
@@ -286,7 +286,7 @@ export function App() {
       </header>
 
       <main className="client-view">
-        {tableDisabled && <section className="status-banner disabled"><div className="status-icon"><Warning weight="fill" /></div><div><strong>Table temporairement désactivée</strong><span>Vous pouvez consulter le menu, mais l’envoi de commande est indisponible. Veuillez appeler un serveur.</span></div></section>}
+        {tableDisabled && <section className="status-banner disabled"><div className="status-icon"><Warning weight="fill" /></div><div><strong>Table réservée</strong><span>Vous pouvez consulter le menu, mais l’envoi de commande est indisponible. Veuillez appeler un serveur.</span></div></section>}
         {countdown > 0 && <section className="status-banner pending"><div className="status-icon"><Clock weight="fill" /></div><div><strong>Trop de commandes en cours</strong><span>Votre commande part automatiquement dans {countdown}s…</span></div></section>}
         {myOrders.length > 0 && <OrdersBanner orders={myOrders} />}
         <CategoryNav category={category} setCategory={setCategory} />
@@ -336,7 +336,7 @@ export function App() {
         <div className="cart-lines">{lines.map((line) => <div className="cart-line" key={line.id}><img src={line.image} alt="" loading="lazy" decoding="async" /><div><strong>{line.name}</strong><span>{money(line.price)}</span></div><div className="mini-stepper"><button onClick={() => changeQuantity(line, -1)} aria-label="Retirer">{line.quantity === 1 ? <Trash /> : <Minus />}</button><strong>{line.quantity}</strong><button onClick={() => changeQuantity(line, 1)} aria-label="Ajouter"><Plus /></button></div></div>)}</div>
         <div className="cart-total"><span>Total</span><strong>{money(total)}</strong></div>
         {tableDisabled ? (
-          <div className="table-disabled-note"><Warning size={20} weight="fill" /><span>Cette table est temporairement désactivée. Veuillez appeler un serveur.</span></div>
+          <div className="table-disabled-note"><Warning size={20} weight="fill" /><span>Cette table est réservée. Veuillez appeler un serveur.</span></div>
         ) : (
           <button className="send-button" onClick={sendOrder} disabled={countdown > 0}><BellRinging size={22} weight="fill" /> {countdown > 0 ? `Envoi dans ${countdown}s` : 'Envoyer aux serveurs'}</button>
         )}
