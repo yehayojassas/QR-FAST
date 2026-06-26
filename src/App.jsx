@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BellRinging, CaretRight, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, Warning, X } from '@phosphor-icons/react';
 
 const FALLBACK_PRODUCTS = [
-  { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/catalog/nachos-a-partager.jpg', description: 'Sauce mexicaine fraîche maison' },
-  { id: 6, name: 'Salade Tricolore', price: 19, category: 'Salades', image: '/products/catalog/salade-tricolore.jpg', description: 'Roquette, tomate cerise, burrata' },
-  { id: 2, name: 'Mini arancini', price: 14, category: 'Entrées', image: '/products/catalog/mini-arancini.jpg', description: 'Bouchées de riz croustillantes' },
-  { id: 7, name: 'Carbonara', price: 25, category: 'Plats', image: '/products/catalog/carbonara.jpg', description: 'Spaghetti, guanciale, œuf et pecorino' },
-  { id: 3, name: 'Planchette maison', price: 28, category: 'À partager', image: '/products/catalog/planchette-maison.jpg', description: 'Charcuteries & fromages' },
-  { id: 8, name: 'Mojito', price: 16, category: 'Boissons', image: '/products/catalog/mojito.jpg', description: 'Rhum, menthe, citron et soda' },
-  { id: 4, name: 'Pimientos de Padrón', price: 12, category: 'Entrées', image: '/products/catalog/pimientos-de-padron-frits.jpg', description: 'Fleur de sel' },
-  { id: 5, name: 'Filets de perche', price: 39, category: 'Plats', image: '/products/catalog/filets-de-perche-meuniere.jpg', description: 'Frites, sauce tartare maison, salade verte' },
+  { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/catalog-clean/nachos-a-partager.jpg', description: 'Sauce mexicaine fraîche maison' },
+  { id: 6, name: 'Salade Tricolore', price: 19, category: 'Salades', image: '/products/catalog-clean/salade-tricolore.jpg', description: 'Roquette, tomate cerise, burrata' },
+  { id: 2, name: 'Mini arancini', price: 14, category: 'Entrées', image: '/products/catalog-clean/mini-arancini.jpg', description: 'Bouchées de riz croustillantes' },
+  { id: 7, name: 'Carbonara', price: 25, category: 'Plats', image: '/products/catalog-clean/carbonara.jpg', description: 'Spaghetti, guanciale, œuf et pecorino' },
+  { id: 3, name: 'Planchette maison', price: 28, category: 'À partager', image: '/products/catalog-clean/planchette-maison.jpg', description: 'Charcuteries & fromages' },
+  { id: 8, name: 'Mojito', price: 16, category: 'Boissons', image: '/products/catalog-clean/mojito.jpg', description: 'Rhum, menthe, citron et soda' },
+  { id: 4, name: 'Pimientos de Padrón', price: 12, category: 'Entrées', image: '/products/catalog-clean/pimientos-de-padron-frits.jpg', description: 'Fleur de sel' },
+  { id: 5, name: 'Filets de perche', price: 39, category: 'Plats', image: '/products/catalog-clean/filets-de-perche-meuniere.jpg', description: 'Frites, sauce tartare maison, salade verte' },
 ];
 
 const CATEGORIES = ['À partager', 'Plats', 'Salades', 'Pâtes', 'Enfants', 'Desserts', 'Vins', 'Bières', 'Boissons', 'Cocktails', 'Spiritueux'];
@@ -26,15 +26,15 @@ const loadStored = (key, fallback) => {
 };
 
 const EXACT_IMAGES = {
-  'Nachos à partager': '/products/catalog/nachos-a-partager.jpg',
-  'Mini arancini': '/products/catalog/mini-arancini.jpg',
-  'Planchette maison': '/products/catalog/planchette-maison.jpg',
-  'Pimientos de Padrón frits': '/products/catalog/pimientos-de-padron-frits.jpg',
-  'Filets de perche meunière': '/products/catalog/filets-de-perche-meuniere.jpg',
-  'Salade Tricolore': '/products/catalog/salade-tricolore.jpg',
-  Carbonara: '/products/catalog/carbonara.jpg',
-  Mojito: '/products/catalog/mojito.jpg',
-  Tiramisu: '/products/catalog/tiramisu.jpg',
+  'Nachos à partager': '/products/catalog-clean/nachos-a-partager.jpg',
+  'Mini arancini': '/products/catalog-clean/mini-arancini.jpg',
+  'Planchette maison': '/products/catalog-clean/planchette-maison.jpg',
+  'Pimientos de Padrón frits': '/products/catalog-clean/pimientos-de-padron-frits.jpg',
+  'Filets de perche meunière': '/products/catalog-clean/filets-de-perche-meuniere.jpg',
+  'Salade Tricolore': '/products/catalog-clean/salade-tricolore.jpg',
+  Carbonara: '/products/catalog-clean/carbonara.jpg',
+  Mojito: '/products/catalog-clean/mojito.jpg',
+  Tiramisu: '/products/catalog-clean/tiramisu.jpg',
 };
 
 function displayCategory(category) {
@@ -48,19 +48,19 @@ function displayCategory(category) {
 function categoryImage(row, productImages = {}) {
   if (productImages[row.article]) return productImages[row.article];
   if (EXACT_IMAGES[row.article]) return EXACT_IMAGES[row.article];
-  if (row.categorie === 'Vin blanc') return '/products/white-wine.png';
-  if (row.categorie === 'Vin rouge') return '/products/red-wine.png';
-  if (['Vin rosé', 'Bollicine'].includes(row.categorie)) return '/products/rose-sparkling.png';
-  if (row.categorie === 'Bières') return '/products/beer.png';
-  if (['Boissons froides', 'Eau filtrée'].includes(row.categorie)) return '/products/soft-drink.png';
-  if (['Digestifs', 'Apéritifs'].includes(row.categorie)) return '/products/spirits.png';
-  if (['Signature', 'Mojito', 'Spritz', 'Classiques', 'Fruités', 'Sans alcool'].includes(row.categorie)) return '/products/cocktail.png';
-  if (row.categorie === 'Desserts') return '/products/dessert.png';
-  if (row.categorie === 'Pâtes') return '/products/carbonara.png';
-  if (row.categorie === 'Salades') return '/products/tricolore.png';
-  if (row.categorie === 'Enfants') return '/products/arancini.png';
-  if (row.categorie === 'À partager') return '/products/nachos.png';
-  return '/products/perche.png';
+  if (row.categorie === 'Vin blanc') return '/products/clean/white-wine.png';
+  if (row.categorie === 'Vin rouge') return '/products/clean/red-wine.png';
+  if (['Vin rosé', 'Bollicine'].includes(row.categorie)) return '/products/clean/rose-sparkling.png';
+  if (row.categorie === 'Bières') return '/products/clean/beer.png';
+  if (['Boissons froides', 'Eau filtrée'].includes(row.categorie)) return '/products/clean/soft-drink.png';
+  if (['Digestifs', 'Apéritifs'].includes(row.categorie)) return '/products/clean/spirits.png';
+  if (['Signature', 'Mojito', 'Spritz', 'Classiques', 'Fruités', 'Sans alcool'].includes(row.categorie)) return '/products/clean/cocktail.png';
+  if (row.categorie === 'Desserts') return '/products/clean/dessert.png';
+  if (row.categorie === 'Pâtes') return '/products/clean/carbonara.png';
+  if (row.categorie === 'Salades') return '/products/clean/tricolore.png';
+  if (row.categorie === 'Enfants') return '/products/clean/arancini.png';
+  if (row.categorie === 'À partager') return '/products/clean/nachos.png';
+  return '/products/clean/perche.png';
 }
 
 function parseCsv(text) {
