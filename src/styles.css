@@ -415,6 +415,10 @@ h1, h2, p { margin-top: 0; }
 
 .share-add svg { width: 30px; height: 30px; }
 
+/* Le stepper du produit vedette garde la taille compacte des autres produits
+   (sans être étiré verticalement par la grille). */
+.share-featured .mini-stepper { align-self: center; }
+
 .share-rest { display: grid; gap: 25px; }
 
 .share-row {
