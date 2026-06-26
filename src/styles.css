@@ -1282,6 +1282,25 @@ h1, h2, p { margin-top: 0; }
 .order-detail-actions .accept { color: #fff; background: #18a767; }
 .order-detail-actions .accept:hover { background: #15945b; }
 
+/* "Libérer la table" dans la modal Voir la table */
+.order-detail-actions.table-view-actions { grid-template-columns: 1fr; }
+.table-view-actions .free {
+  color: #fffaf1;
+  background: linear-gradient(135deg, #263e2c, #17251b);
+}
+.table-view-actions .free:hover { filter: brightness(1.08); }
+
+/* Option "Voir la table" dans le menu de statut */
+.popover-view-table {
+  margin-top: 4px;
+  padding-top: 10px !important;
+  border-top: 1px solid rgba(0, 0, 0, .08);
+  color: var(--terracotta);
+  font-weight: 800;
+}
+.popover-view-table svg { color: var(--terracotta); flex: 0 0 auto; }
+.popover-view-table:hover { background: #fbf1ec; color: var(--terracotta); }
+
 .table-zone {
   position: absolute;
   z-index: 1;
