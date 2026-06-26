@@ -92,13 +92,11 @@ export function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [myOrders, setMyOrders] = useState(() => loadStored(ORDERS_KEY, [])); // { id, status }, persistées
   const [toast, setToast] = useState('');
-  const [rotation, setRotation] = useState(0);
   const [openCount, setOpenCount] = useState(0);   // nombre de commandes ouvertes côté serveur
   const [countdown, setCountdown] = useState(0);    // secondes restantes avant envoi auto (0 = inactif)
   const [tableDisabled, setTableDisabled] = useState(false); // table désactivée par un serveur
   const allOrdersRef = useRef(new Map());           // id -> statut (toutes les commandes)
   const queuedRef = useRef(null);                   // commande capturée en attente d'envoi
-  const dragStart = useRef(null);
   const myOrdersRef = useRef([]);
   useEffect(() => { myOrdersRef.current = myOrders; }, [myOrders]);
   useEffect(() => { try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* stockage indisponible */ } }, [cart]);
@@ -300,7 +298,6 @@ export function App() {
             add={add}
             changeQuantity={changeQuantity}
             setSelected={setSelected}
-            setRotation={setRotation}
           />
         ) : (
           <MenuList
@@ -309,7 +306,6 @@ export function App() {
             add={add}
             changeQuantity={changeQuantity}
             setSelected={setSelected}
-            setRotation={setRotation}
           />
         )}
         {!visibleProducts.length && <div className="empty-state">Aucun produit ne correspond à votre recherche.</div>}
@@ -327,9 +323,9 @@ export function App() {
 
       {selected && <div className="overlay" role="dialog" aria-modal="true" aria-label={selected.name}>
         <button className="overlay-backdrop" onClick={() => setSelected(null)} aria-label="Fermer" />
-        <section className="product-sheet"><div className="sheet-topline"><button className="icon-button" onClick={() => setSelected(null)} aria-label="Retour"><ArrowLeft size={22} /></button><span>Vue 360°</span><button className="icon-button" onClick={() => setSelected(null)} aria-label="Fermer"><X size={22} /></button></div>
-          <div className="rotate-stage" onPointerDown={(event) => { dragStart.current = { x: event.clientX, rotation }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (dragStart.current) setRotation(dragStart.current.rotation + (event.clientX - dragStart.current.x) * .7); }} onPointerUp={() => { dragStart.current = null; }}>
-            <img src={selected.image} alt={selected.name} style={{ transform: `rotateY(${rotation}deg)` }} draggable="false" decoding="async" /><p>Glissez pour tourner le plat</p>
+        <section className="product-sheet"><div className="sheet-topline"><button className="icon-button" onClick={() => setSelected(null)} aria-label="Retour"><ArrowLeft size={22} /></button><button className="icon-button" onClick={() => setSelected(null)} aria-label="Fermer"><X size={22} /></button></div>
+          <div className="product-stage">
+            <img src={selected.image} alt={selected.name} draggable="false" decoding="async" />
           </div>
           <div className="sheet-copy"><p className="eyebrow">{selected.sourceCategory || selected.category}</p><h2>{selected.name}</h2><p>{selected.description}{selected.size ? ` · ${selected.size}` : ''}</p><div className="sheet-action"><strong>{money(selected.price)}</strong><button className="primary-button" onClick={() => { add(selected); setSelected(null); }}><Plus size={20} weight="bold" /> Ajouter</button></div></div>
         </section>
@@ -418,31 +414,18 @@ function ProductStepper({ product, cart, add, changeQuantity, className = '' }) 
   );
 }
 
-function ViewButton({ product, setSelected, setRotation, className = '' }) {
-  return (
-    <button
-      className={`view-360 ${className}`}
-      onClick={() => { setSelected(product); setRotation(0); }}
-      aria-label={`Voir ${product.name} en 360 degrés`}
-    >
-      <Sparkle size={13} weight="fill" /> 360°
-    </button>
-  );
-}
-
-function ShareCategory({ products, cart, add, changeQuantity, setSelected, setRotation }) {
+function ShareCategory({ products, cart, add, changeQuantity, setSelected }) {
   const [featured, ...rest] = products;
   if (!featured) return null;
   return (
     <section className="share-menu" aria-label="Produits À partager">
       <article className="share-featured">
         <span className="share-index">01</span>
-        <button className="share-photo" onClick={() => { setSelected(featured); setRotation(0); }} aria-label={`Voir ${featured.name}`}>
+        <button className="share-photo" onClick={() => setSelected(featured)} aria-label={`Voir ${featured.name}`}>
           <img src={featured.image} alt={featured.name} decoding="async" />
-          <ViewButton product={featured} setSelected={setSelected} setRotation={setRotation} />
         </button>
         <div className="share-copy">
-          <button onClick={() => { setSelected(featured); setRotation(0); }}><h2>{featured.name}</h2></button>
+          <button onClick={() => setSelected(featured)}><h2>{featured.name}</h2></button>
           {featured.description && <p>{featured.description}</p>}
           <strong>{money(featured.price)}</strong>
         </div>
@@ -451,15 +434,14 @@ function ShareCategory({ products, cart, add, changeQuantity, setSelected, setRo
       <div className="share-rest">
         {rest.map((product, index) => (
           <article className="share-row" key={product.id}>
-            <button className="share-row-photo" onClick={() => { setSelected(product); setRotation(0); }}>
+            <button className="share-row-photo" onClick={() => setSelected(product)}>
               <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
             </button>
             <div className="share-row-copy">
               <span>{String(index + 2).padStart(2, '0')}</span>
-              <button onClick={() => { setSelected(product); setRotation(0); }}><h2>{product.name}</h2></button>
+              <button onClick={() => setSelected(product)}><h2>{product.name}</h2></button>
               {product.description && <p>{product.description}</p>}
               <strong>{money(product.price)}</strong>
-              <ViewButton product={product} setSelected={setSelected} setRotation={setRotation} />
             </div>
             <ProductStepper product={product} cart={cart} add={add} changeQuantity={changeQuantity} />
           </article>
@@ -469,7 +451,7 @@ function ShareCategory({ products, cart, add, changeQuantity, setSelected, setRo
   );
 }
 
-function MenuList({ products, cart, add, changeQuantity, setSelected, setRotation }) {
+function MenuList({ products, cart, add, changeQuantity, setSelected }) {
   return (
     <section className="menu-list" aria-label="Produits">
       {products.map((product, index) => {
@@ -477,16 +459,15 @@ function MenuList({ products, cart, add, changeQuantity, setSelected, setRotatio
         return (
           <article className={`menu-row ${isChef ? 'chef-row' : ''}`} key={product.id}>
             {isChef && <span className="chef-label"><Sparkle size={13} weight="fill" /> Suggestion du chef</span>}
-            <button className="menu-thumb" onClick={() => { setSelected(product); setRotation(0); }} aria-label={`Voir ${product.name}`}>
+            <button className="menu-thumb" onClick={() => setSelected(product)} aria-label={`Voir ${product.name}`}>
               <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
             </button>
             <div className="menu-copy">
-              <button onClick={() => { setSelected(product); setRotation(0); }}><h2>{product.name}</h2></button>
+              <button onClick={() => setSelected(product)}><h2>{product.name}</h2></button>
               <p>{[product.description, product.size].filter(Boolean).join(' · ') || product.sourceCategory || product.category}</p>
               <strong>{money(product.price)}</strong>
             </div>
             <div className="menu-actions">
-              <ViewButton product={product} setSelected={setSelected} setRotation={setRotation} />
               <ProductStepper product={product} cart={cart} add={add} changeQuantity={changeQuantity} />
             </div>
           </article>
