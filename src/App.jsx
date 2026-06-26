@@ -313,7 +313,16 @@ export function App() {
           />
         )}
         {!visibleProducts.length && <div className="empty-state">Aucun produit ne correspond à votre recherche.</div>}
-        {itemCount > 0 && <button className="cart-bar" onClick={() => setCartOpen(true)}><span className="cart-count">{itemCount}</span><span>Voir ma commande</span><strong>{money(total)}</strong></button>}
+        {itemCount > 0 && (
+          <div className="cart-glow-wrap">
+            <button className="cart-glow-button" onClick={() => setCartOpen(true)}>
+              <span className="cart-glow-border" />
+              <span className="cart-glow-light" />
+              <span className="cart-glow-text">Voir ma commande</span>
+              <span className="cart-glow-count">{itemCount}</span>
+            </button>
+          </div>
+        )}
       </main>
 
       {selected && <div className="overlay" role="dialog" aria-modal="true" aria-label={selected.name}>
