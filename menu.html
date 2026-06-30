@@ -10,6 +10,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="ClickOne - commande restaurant par QR code" />
     <title>ClickOne · Table 7</title>
+    <script>
+      // Hydrate la saison choisie AVANT le premier rendu pour éviter tout
+      // flash du thème par défaut (FOUT). Aucune saison sauvegardée = ClickOne d'origine.
+      try {
+        var s = localStorage.getItem('clickone:season');
+        if (s === 'spring' || s === 'summer' || s === 'autumn' || s === 'winter') {
+          document.documentElement.setAttribute('data-season', s);
+        }
+      } catch (_) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

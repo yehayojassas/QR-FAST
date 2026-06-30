@@ -1,0 +1,496 @@
+/* ============================================================================
+   Thèmes saisonniers ClickOne (Printemps · Été · Automne · Hiver)
+   Le design d'origine reste intact tant que <html> n'a aucun data-season.
+   Activation via document.documentElement.dataset.season = 'spring' | ...
+   ============================================================================ */
+
+/* --- Bouton "/ V. BETA /" + menu déroulant ----------------------------------*/
+.season-switcher {
+  position: relative;
+  display: inline-flex;
+}
+
+.season-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(38, 62, 44, .55);
+  border-radius: 7px;
+  color: var(--olive);
+  background: rgba(255, 252, 246, .68);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  transition: transform .18s ease, border-color .18s ease, color .18s ease,
+              background .18s ease, box-shadow .18s ease;
+}
+
+.season-toggle:hover { transform: translateY(-1px); border-color: rgba(38, 62, 44, .8); }
+.season-toggle:active { transform: translateY(0); }
+.season-toggle.is-open { border-color: rgba(38, 62, 44, .85); }
+.season-toggle.is-open .season-toggle-caret { transform: rotate(180deg); }
+.season-toggle-label { font-family: 'DM Sans', system-ui, sans-serif; }
+.season-toggle-caret {
+  transition: transform .2s ease;
+  opacity: .75;
+}
+
+.season-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 168px;
+  padding: 6px;
+  border: 1px solid rgba(20, 16, 12, .1);
+  border-radius: 14px;
+  background: rgba(255, 252, 246, .96);
+  box-shadow: 0 18px 44px rgba(40, 30, 20, .18);
+  backdrop-filter: blur(14px);
+  display: grid;
+  gap: 2px;
+  transform-origin: top right;
+  animation: season-menu-in .2s cubic-bezier(.2, .8, .3, 1.05);
+}
+
+@keyframes season-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.season-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--olive);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  background: transparent;
+  transition: background .15s ease, color .15s ease;
+}
+
+.season-menu-item:hover,
+.season-menu-item:focus-visible {
+  background: rgba(38, 62, 44, .08);
+  color: var(--olive);
+  outline: none;
+}
+
+.season-menu-item.is-active {
+  background: rgba(201, 77, 37, .1);
+  color: var(--terracotta);
+}
+
+.season-menu-icon { flex: 0 0 auto; }
+.season-menu-label { flex: 1; }
+.season-menu-check { flex: 0 0 auto; color: currentColor; }
+
+/* --- Layout du header : ligne Table + V. BETA ------------------------------*/
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+@media (max-width: 360px) {
+  .season-toggle { padding: 0 10px; font-size: 12.5px; }
+}
+
+/* --- Couche de particules ---------------------------------------------------*/
+.seasonal-effects {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 38;
+}
+
+/* ============================================================================
+   Variables saisonnières + transitions globales
+   ============================================================================ */
+:root {
+  --season-transition:
+    background-color .35s ease,
+    color .35s ease,
+    border-color .35s ease,
+    box-shadow .35s ease;
+}
+
+html[data-season] body,
+html[data-season] .app-shell,
+html[data-season] .demo-header,
+html[data-season] .table-pill,
+html[data-season] .season-toggle,
+html[data-season] .menu-row,
+html[data-season] .menu-copy h2,
+html[data-season] .share-copy h2,
+html[data-season] .share-row-copy h2,
+html[data-season] .category-title h1,
+html[data-season] .category-strip,
+html[data-season] .category-strip button,
+html[data-season] .icon-button,
+html[data-season] .quick-add,
+html[data-season] .mini-stepper,
+html[data-season] .mini-stepper button,
+html[data-season] .product-sheet,
+html[data-season] .cart-sheet,
+html[data-season] .cart-line img,
+html[data-season] .menu-thumb,
+html[data-season] .share-photo,
+html[data-season] .share-row-photo,
+html[data-season] .chef-row {
+  transition: var(--season-transition);
+}
+
+/* Animations désactivées si l'utilisateur le demande. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --season-transition: none; }
+  .seasonal-effects { display: none; }
+}
+
+/* ============================================================================
+   PRINTEMPS
+   ============================================================================ */
+html[data-season="spring"] {
+  --season-page-bg: #FFF9F0;
+  --season-surface: #FFFFFF;
+  --season-surface-elevated: #FFFDFA;
+  --season-text: #26372B;
+  --season-text-muted: #6A7B6F;
+  --season-accent: #78966F;
+  --season-accent-strong: #5D7C5A;
+  --season-accent-soft: #DCA9B2;
+  --season-border: rgba(38, 55, 43, .18);
+  --season-shadow: 0 18px 48px rgba(70, 90, 70, .12);
+  --season-focus-ring: rgba(120, 150, 111, .42);
+  --season-headline: #2B3F31;
+  --season-chef-bg: linear-gradient(135deg, rgba(220, 169, 178, .2), rgba(184, 206, 170, .24));
+  --season-toast-bg: #2B3F31;
+  --season-stripe: rgba(38, 55, 43, .14);
+}
+
+html[data-season="spring"] body { background: #FFF9F0; color: var(--season-text); }
+html[data-season="spring"] body::before { background: #FFF9F0; }
+@media (min-width: 768px) {
+  html[data-season="spring"] body {
+    background:
+      radial-gradient(circle at 12% 0%, rgba(120, 150, 111, .14), transparent 25%),
+      linear-gradient(90deg, #ece5d2, #f6f0e1 18%, #f8f2e3 82%, #ece5d2);
+  }
+}
+
+/* ============================================================================
+   ÉTÉ
+   ============================================================================ */
+html[data-season="summer"] {
+  --season-page-bg: #FFF6DC;
+  --season-surface: #FFFCF1;
+  --season-surface-elevated: #FFFDF7;
+  --season-text: #342A1F;
+  --season-text-muted: #7A6A56;
+  --season-accent: #C95B35;
+  --season-accent-strong: #A04020;
+  --season-accent-soft: #E8AE3C;
+  --season-border: rgba(102, 68, 28, .2);
+  --season-shadow: 0 18px 48px rgba(170, 110, 40, .14);
+  --season-focus-ring: rgba(232, 174, 60, .48);
+  --season-headline: #3D2A18;
+  --season-chef-bg: linear-gradient(135deg, rgba(232, 174, 60, .22), rgba(201, 91, 53, .2));
+  --season-toast-bg: #3D2A18;
+  --season-stripe: rgba(102, 68, 28, .15);
+}
+
+html[data-season="summer"] body { background: #FFF6DC; color: var(--season-text); }
+html[data-season="summer"] body::before { background: #FFF6DC; }
+@media (min-width: 768px) {
+  html[data-season="summer"] body {
+    background:
+      radial-gradient(circle at 12% 0%, rgba(232, 174, 60, .18), transparent 28%),
+      linear-gradient(90deg, #ebd9b3, #f6e5bc 18%, #f8eac6 82%, #ebd9b3);
+  }
+}
+
+/* ============================================================================
+   AUTOMNE
+   ============================================================================ */
+html[data-season="autumn"] {
+  --season-page-bg: #F3E5D3;
+  --season-surface: #FFF8ED;
+  --season-surface-elevated: #FFF9F0;
+  --season-text: #3F2A1C;
+  --season-text-muted: #6F5946;
+  --season-accent: #A95732;
+  --season-accent-strong: #642D36;
+  --season-accent-soft: #D89773;
+  --season-border: rgba(99, 61, 42, .22);
+  --season-shadow: 0 18px 48px rgba(99, 61, 42, .18);
+  --season-focus-ring: rgba(169, 87, 50, .5);
+  --season-headline: #3A2014;
+  --season-chef-bg: linear-gradient(135deg, rgba(169, 87, 50, .2), rgba(100, 45, 54, .18));
+  --season-toast-bg: #3A2014;
+  --season-stripe: rgba(99, 61, 42, .18);
+}
+
+html[data-season="autumn"] body { background: #F3E5D3; color: var(--season-text); }
+html[data-season="autumn"] body::before { background: #F3E5D3; }
+@media (min-width: 768px) {
+  html[data-season="autumn"] body {
+    background:
+      radial-gradient(circle at 12% 0%, rgba(169, 87, 50, .18), transparent 28%),
+      linear-gradient(90deg, #e2cdb1, #efd9b5 18%, #f0debb 82%, #e2cdb1);
+  }
+}
+
+/* ============================================================================
+   HIVER
+   ============================================================================ */
+html[data-season="winter"] {
+  --season-page-bg: #070B14;
+  --season-surface: #0F1F3E;
+  --season-surface-elevated: #122648;
+  --season-text: #F7F4ED;
+  --season-text-muted: rgba(247, 244, 237, .65);
+  --season-accent: #A9D6FF;
+  --season-accent-strong: #4A85C5;
+  --season-accent-soft: #C9E3FF;
+  --season-border: rgba(169, 214, 255, .2);
+  --season-shadow: 0 22px 60px rgba(0, 5, 20, .55);
+  --season-focus-ring: rgba(169, 214, 255, .6);
+  --season-headline: #F7F4ED;
+  --season-chef-bg: linear-gradient(135deg, rgba(15, 31, 62, .9), rgba(7, 11, 20, .82));
+  --season-toast-bg: #0F1F3E;
+  --season-stripe: rgba(169, 214, 255, .18);
+}
+
+html[data-season="winter"] body {
+  background: #070B14;
+  color: var(--season-text);
+}
+html[data-season="winter"] body::before { background: #070B14; }
+@media (min-width: 768px) {
+  html[data-season="winter"] body {
+    background:
+      radial-gradient(circle at 12% 0%, rgba(74, 133, 197, .18), transparent 30%),
+      linear-gradient(90deg, #050811, #0a1226 18%, #0a1226 82%, #050811);
+  }
+}
+
+/* ============================================================================
+   Overrides communs aux saisons (s'appliquent dès qu'un data-season est posé)
+   ============================================================================ */
+
+html[data-season] .app-shell {
+  background-color: var(--season-page-bg);
+  background-image:
+    radial-gradient(circle at 0 0, var(--season-stripe), transparent 140px),
+    linear-gradient(180deg, var(--season-page-bg), var(--season-page-bg));
+  color: var(--season-text);
+}
+
+html[data-season] .demo-header {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--season-page-bg) 96%, transparent),
+      color-mix(in srgb, var(--season-page-bg) 86%, transparent) 70%,
+      transparent);
+}
+
+html[data-season] .table-pill,
+html[data-season] .season-toggle {
+  border-color: var(--season-border);
+  color: var(--season-headline);
+  background: color-mix(in srgb, var(--season-surface-elevated) 70%, transparent);
+}
+html[data-season] .table-pill svg { color: var(--season-accent); }
+
+html[data-season] .season-toggle:hover,
+html[data-season] .season-toggle.is-open {
+  border-color: var(--season-accent);
+  color: var(--season-headline);
+}
+
+html[data-season] .season-menu {
+  background: color-mix(in srgb, var(--season-surface-elevated) 96%, transparent);
+  border-color: var(--season-border);
+  box-shadow: var(--season-shadow);
+}
+html[data-season] .season-menu-item {
+  color: var(--season-headline);
+}
+html[data-season] .season-menu-item:hover,
+html[data-season] .season-menu-item:focus-visible {
+  background: color-mix(in srgb, var(--season-accent) 14%, transparent);
+  color: var(--season-headline);
+}
+html[data-season] .season-menu-item.is-active {
+  background: color-mix(in srgb, var(--season-accent) 22%, transparent);
+  color: var(--season-accent);
+}
+
+/* Navigation des catégories */
+html[data-season] .category-strip { border-bottom-color: var(--season-border); }
+html[data-season] .category-strip button { color: var(--season-text); }
+html[data-season] .category-strip button.active { color: var(--season-accent); }
+html[data-season] .nav-more { color: var(--season-text-muted); }
+html[data-season] .swipe-indicator::before { background: var(--season-border); }
+html[data-season] .swipe-indicator span { background: var(--season-accent); }
+
+/* Titres */
+html[data-season] .category-title { border-bottom-color: var(--season-border); }
+html[data-season] .category-title h1,
+html[data-season] .share-copy h2,
+html[data-season] .share-row-copy h2,
+html[data-season] .menu-copy h2 { color: var(--season-headline); }
+
+html[data-season] .share-copy p,
+html[data-season] .share-row-copy p,
+html[data-season] .menu-copy p { color: var(--season-text-muted); }
+
+html[data-season] .share-copy strong,
+html[data-season] .share-row-copy strong,
+html[data-season] .menu-copy strong { color: var(--season-headline); }
+
+html[data-season] .share-row-copy > span { color: var(--season-accent); }
+html[data-season] .share-index { color: var(--season-accent); }
+html[data-season] .share-index::after { background: var(--season-accent); }
+
+html[data-season] .share-featured { border-bottom-color: var(--season-border); }
+html[data-season] .menu-row { border-bottom-color: var(--season-border); }
+
+/* Boutons "+" et stepper */
+html[data-season] .quick-add {
+  border-color: var(--season-border);
+  color: var(--season-accent);
+  background: color-mix(in srgb, var(--season-surface-elevated) 70%, transparent);
+}
+html[data-season] .mini-stepper {
+  border-color: var(--season-border);
+  background: color-mix(in srgb, var(--season-surface-elevated) 82%, transparent);
+}
+html[data-season] .mini-stepper button { color: var(--season-text); }
+html[data-season] .mini-stepper strong { color: var(--season-headline); }
+
+/* Bouton "ajouter" de la vedette À partager */
+html[data-season] .share-add {
+  background: linear-gradient(135deg, var(--season-accent), var(--season-accent-strong));
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--season-accent) 32%, transparent);
+}
+
+/* Suggestion du chef */
+html[data-season] .chef-row { background: var(--season-chef-bg); }
+html[data-season] .chef-label { color: var(--season-accent); }
+
+/* Fin de menu */
+html[data-season] .menu-end { color: var(--season-accent); }
+html[data-season] .menu-end span { background: var(--season-border); }
+
+/* En-têtes & overlays */
+html[data-season] .product-sheet,
+html[data-season] .cart-sheet {
+  background: var(--season-surface-elevated);
+  color: var(--season-text);
+}
+html[data-season] .sheet-copy { border-top-color: var(--season-border); }
+html[data-season] .sheet-copy h2 { color: var(--season-headline); }
+html[data-season] .sheet-copy > p:not(.eyebrow) { color: var(--season-text-muted); }
+html[data-season] .eyebrow { color: var(--season-accent); }
+html[data-season] .sheet-topline > span { color: var(--season-text-muted); }
+
+html[data-season] .icon-button {
+  border-color: var(--season-border);
+  color: var(--season-text);
+  background: color-mix(in srgb, var(--season-surface-elevated) 80%, transparent);
+}
+
+html[data-season] .primary-button,
+html[data-season] .send-button {
+  background: linear-gradient(135deg, var(--season-accent), var(--season-accent-strong));
+}
+
+/* Panier */
+html[data-season] .cart-lines { color: var(--season-text); }
+html[data-season] .cart-line > div strong { color: var(--season-headline); }
+html[data-season] .cart-line span { color: var(--season-text-muted); }
+html[data-season] .cart-total { border-top-color: var(--season-border); color: var(--season-text); }
+html[data-season] .cart-total strong { color: var(--season-headline); }
+html[data-season] .payment-note { color: var(--season-text-muted); }
+
+/* Bouton flottant "Voir ma commande" */
+html[data-season] .cart-glow-count {
+  background: var(--season-accent);
+  color: var(--season-surface-elevated);
+  box-shadow:
+    0 0 0 3px var(--season-page-bg),
+    0 8px 18px color-mix(in srgb, var(--season-accent) 38%, transparent);
+}
+
+/* Toast */
+html[data-season] .toast {
+  background: var(--season-toast-bg);
+  color: var(--season-surface-elevated);
+}
+
+/* Focus accessible saisonnier */
+html[data-season] button:focus-visible {
+  outline-color: var(--season-focus-ring);
+}
+
+/* ============================================================================
+   Ajustements spécifiques HIVER (fond sombre, photos sur fond crème)
+   ============================================================================ */
+
+/* Décor botanique (PNG en multiply) : trop sombre sur fond nuit -> on masque. */
+html[data-season="winter"] .botanical-deco { display: none; }
+
+/* Cadre subtil autour des vignettes pour intégrer le crème "cuit" dans l'image. */
+html[data-season="winter"] .menu-thumb,
+html[data-season="winter"] .share-row-photo,
+html[data-season="winter"] .share-photo {
+  background: color-mix(in srgb, var(--season-accent-soft) 8%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(247, 244, 237, .08);
+}
+
+/* Cart-glow button reste lumineux : conserve son blanc mais ajuste le compteur. */
+html[data-season="winter"] .cart-glow-button {
+  background: #F7F4ED;
+  color: #0F1F3E;
+}
+html[data-season="winter"] .cart-glow-text { color: #0F1F3E; }
+
+/* Status banners (pending / disabled) plus lisibles sur fond nuit. */
+html[data-season="winter"] .status-banner {
+  background: rgba(247, 244, 237, .08);
+  color: var(--season-text);
+}
+
+/* Bannières standards sur thèmes clairs : laisser le rendu d'origine. */
+
+/* ============================================================================
+   Sous-réglages chromatiques pour les autres saisons
+   ============================================================================ */
+
+/* Été : conserve l'orange ClickOne marqué, mais réchauffe le fond sandwich. */
+html[data-season="summer"] .cart-glow-button {
+  background: #FFFCEC;
+}
+
+/* Automne : tablette du panier flottant un peu plus chaude. */
+html[data-season="autumn"] .cart-glow-button {
+  background: #FFF6E5;
+}
+
+/* Printemps : tablette du panier flottant ivoire légèrement verdi. */
+html[data-season="spring"] .cart-glow-button {
+  background: #FBFFF4;
+}
