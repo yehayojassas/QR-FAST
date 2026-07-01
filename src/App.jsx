@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BellRinging, CaretRight, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, Warning, X } from '@phosphor-icons/react';
-import { SeasonalThemeSwitcher } from './seasonal/SeasonalThemeSwitcher.jsx';
 
 const FALLBACK_PRODUCTS = [
   { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/catalog-clean/nachos-a-partager.jpg', description: 'Sauce mexicaine fraîche maison' },
@@ -283,10 +282,7 @@ export function App() {
       <img className="botanical-deco botanical-deco-bottom" src="/botanical-corner.png" alt="" aria-hidden="true" />
       <header className="demo-header">
         <button className="brand" aria-label="Accueil ClickOne"><img src="/clickone-qrfast-logo.svg" alt="ClickOne" /></button>
-        <div className="header-actions">
-          <button className="table-pill" aria-label={`Table ${TABLE}`}>Table {TABLE} <img src="/table-icon-3d.png" alt="" /></button>
-          <SeasonalThemeSwitcher />
-        </div>
+        <button className="table-pill" aria-label={`Table ${TABLE}`}>Table {TABLE} <img src="/table-icon-3d.png" alt="" /></button>
       </header>
 
       <main className="client-view">
