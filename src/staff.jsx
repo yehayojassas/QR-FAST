@@ -160,8 +160,8 @@ function StaffLogin({ onSuccess }) {
   return (
     <div className="staff-login">
       <form className="staff-login-card" onSubmit={submit}>
-        <h1>Accès équipe</h1>
-        <p>Entrez le code fourni par le restaurant.</p>
+        <h1>Connexion</h1>
+        <p>Entrez votre code d'accès (équipe ou responsable).</p>
         <input
           type="password"
           inputMode="numeric"
