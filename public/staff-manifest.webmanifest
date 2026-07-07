@@ -1,0 +1,16 @@
+{
+  "name": "ClickOne · Serveurs",
+  "short_name": "ClickOne Staff",
+  "description": "Espace serveurs ClickOne : suivi des commandes et des tables en temps réel.",
+  "start_url": "/staff",
+  "scope": "/staff",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8f8f8",
+  "theme_color": "#c94d25",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

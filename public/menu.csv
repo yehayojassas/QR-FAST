@@ -1,111 +1,111 @@
-type,categorie,article,description,contenance,prix_chf
-plat,À partager,Nachos à partager,Sauce mexicaine fraîche maison,,16.50
-plat,À partager,Mini arancini,Croustillants,,14.00
-plat,À partager,Planchette maison,Charcuteries & fromages,,28.00
-plat,À partager,Pimientos de Padrón frits,Fleur de sel,,12.00
-plat,Plats,Moules marinières,Avec frites,,31.00
-plat,Plats,Filets de perche meunière,"Frites, sauce tartare maison, salade verte",,39.00
-plat,Plats,Insalata di mare,Fraîcheur citronnée,,38.00
-plat,Plats,Entrecôte de bœuf,Avec frites,,38.00
-supplement,Plats,Sauce au poivre vert,,,5.00
-supplement,Plats,Sauce chimichurri,,,5.00
-plat,Plats,Tartare de thon avocat,Frites et toast,,36.00
-plat,Salades,Salade Tricolore,"Roquette, tomate cerise, burrata",,19.00
-plat,Salades,Pastèque & feta,Fraîcheur d’été,,14.50
-plat,Salades,Salade verte,,,8.00
-plat,Salades,Salade mêlée,,,10.00
-plat,Salades,Salade chèvre chaud,,,24.50
-plat,Pâtes,Carbonara,,,25.00
-plat,Pâtes,Spaghetti alle vongole,,,30.00
-plat,Enfants,Chicken nuggets,,,14.00
-plat,Enfants,Pâtes au beurre,,,10.00
-dessert,Desserts,Trileçe,Le dessert star de l’été,,13.00
-dessert,Desserts,Tiramisu,Maison,,14.00
-vin,Vin blanc,Chasselas,Villeneuve — 12.4 % vol.,1 dl,5.00
-vin,Vin blanc,Chasselas,Villeneuve — 12.4 % vol.,5 dl,25.00
-vin,Vin blanc,Chasselas,Villeneuve — 12.4 % vol.,Bouteille,39.00
-vin,Vin blanc,Chardonnay,Italie — 13 % vol.,1 dl,5.00
-vin,Vin blanc,Chardonnay,Italie — 13 % vol.,5 dl,25.00
-vin,Vin blanc,Chardonnay,Italie — 13 % vol.,Bouteille,36.00
-vin,Vin blanc,Pinot Grigio,Italie — 13 % vol.,1 dl,5.00
-vin,Vin blanc,Pinot Grigio,Italie — 13 % vol.,5 dl,25.00
-vin,Vin blanc,Pinot Grigio,Italie — 13 % vol.,Bouteille,35.00
-vin,Vin rouge,Gamay,Villeneuve — 13.8 % vol.,1 dl,6.00
-vin,Vin rouge,Gamay,Villeneuve — 13.8 % vol.,5 dl,30.00
-vin,Vin rouge,Gamay,Villeneuve — 13.8 % vol.,Bouteille,41.00
-vin,Vin rouge,Pinot Noir,Villeneuve — 13.8 % vol.,1 dl,6.00
-vin,Vin rouge,Pinot Noir,Villeneuve — 13.8 % vol.,5 dl,30.00
-vin,Vin rouge,Pinot Noir,Villeneuve — 13.8 % vol.,Bouteille,41.00
-vin,Vin rouge,Barbera,Italie — 13.5 % vol.,Bouteille,48.00
-vin,Vin rouge,Chianti,Italie — 13 % vol.,1 dl,6.00
-vin,Vin rouge,Chianti,Italie — 13 % vol.,5 dl,30.00
-vin,Vin rouge,Chianti,Italie — 13 % vol.,Bouteille,42.00
-vin,Vin rouge,Negramaro,Italie — 13 % vol.,Bouteille,34.00
-vin,Vin rouge,Nero d’Avola,Italie — 14 % vol.,Bouteille,39.00
-vin,Vin rouge,Aglianico,Italie — 13 % vol.,Bouteille,44.00
-vin,Vin rouge,Primitivo,Italie — 14 % vol.,Bouteille,43.00
-vin,Vin rouge,Montepulciano,Italie — 13.5 % vol.,1 dl,5.00
-vin,Vin rouge,Montepulciano,Italie — 13.5 % vol.,5 dl,25.00
-vin,Vin rouge,Montepulciano,Italie — 13.5 % vol.,Bouteille,35.00
-vin,Vin rouge,Cannonau,Italie — 13.5 % vol.,Bouteille,46.00
-vin,Vin rouge,Rosso Toscana,Italie — 13.5 % vol.,Bouteille,48.00
-vin,Vin rouge,Ripasso Valpolicella,Italie — 14 % vol.,Bouteille,54.00
-vin,Vin rosé,Œil de Perdrix,Suisse — 13 % vol.,1 dl,5.00
-vin,Vin rosé,Œil de Perdrix,Suisse — 13 % vol.,5 dl,25.00
-vin,Vin rosé,Œil de Perdrix,Suisse — 13 % vol.,Bouteille,39.00
-vin,Bollicine,Moscato,Italie — 5.5 % vol.,1 dl,7.00
-vin,Bollicine,Moscato,Italie — 5.5 % vol.,Bouteille,48.00
-vin,Bollicine,Prosecco,Italie — 11 % vol.,1 dl,7.00
-vin,Bollicine,Prosecco,Italie — 11 % vol.,Bouteille,48.00
-boisson,Bières,Moretti pression,4.6 % vol.,2.5 dl,5.00
-boisson,Bières,Moretti pression,4.6 % vol.,5 dl,9.00
-boisson,Bières,Panachée / Monaco,4.6 % vol.,2.5 dl,5.00
-boisson,Bières,Panachée / Monaco,4.6 % vol.,5 dl,9.00
-boisson,Bières,Blonde 26,5 % vol.,33 cl,6.00
-boisson,Bières,Ambrée 26,5.9 % vol.,33 cl,7.90
-boisson,Bières,Blanche 26,5.7 % vol.,33 cl,7.90
-boisson,Bières,Moretti 0 %,,33 cl,6.00
-boisson,Boissons froides,Coca-Cola / Sprite / Fanta / Rivella rouge,,33 cl,5.80
-boisson,Boissons froides,Schweppes Lemon,,20 cl,5.80
-boisson,Boissons froides,Bitter rouge,,10 cl,5.80
-boisson,Boissons froides,Ramseier,,33 cl,5.80
-boisson,Boissons froides,Red Bull,,,6.50
-boisson,Boissons froides,Thé froid pêche ou citron,,33 cl,5.80
-boisson,Boissons froides,Sirop enfant,,20 cl,1.00
-boisson,Boissons froides,Jus et nectar de fruits,"Orange, ananas ou abricot",20 cl,5.80
-boisson,Eau filtrée,Plate,,50 cl,4.50
-boisson,Eau filtrée,Gazeuse,,50 cl,5.00
-cocktail,Signature,Passion Fresh,"Passoã 17 % vol., tonic, tranche d’orange",16 cl,14.00
-cocktail,Signature,Malibu Refresh,"Malibu 21 % vol., jus d’orange",16 cl,14.00
-cocktail,Mojito,Mojito,"Rhum 37.5 % vol., menthe, citron, soda",16 cl,16.00
-cocktail,Mojito,Mojito fraise,"Rhum 37.5 % vol., menthe, fraise, citron, soda",16 cl,17.00
-cocktail,Spritz,Aperol Spritz,"Aperol 11 % vol., prosecco 11.5 % vol., eau gazeuse, tranche d’orange",15 cl,13.00
-cocktail,Spritz,Hugo,"Prosecco 11.5 % vol., sureau, citron, menthe",15 cl,14.00
-cocktail,Spritz,Sarti Spritz,"Sarti Rosa 14 % vol., prosecco 11.5 % vol., eau gazeuse, citron vert",15 cl,14.00
-cocktail,Spritz,Limoncello Spritz,"Limoncello 26 % vol., prosecco 11.5 % vol., eau gazeuse, tranche de citron",15 cl,13.00
-cocktail,Spritz,Campari Spritz,"Campari 25 % vol., prosecco 11.5 % vol., eau gazeuse, tranche d’orange",15 cl,15.00
-cocktail,Classiques,Gin Tonic,"Gin 40 % vol., tonic soda",14 cl,15.00
-cocktail,Classiques,Campari Orange,"Campari 25 % vol., jus d’orange",15 cl,15.00
-cocktail,Classiques,Amaretto Sour,"Amaretto 28 % vol., jus de citron, tranche d’orange",12 cl,14.00
-cocktail,Classiques,Cuba Libre,"Rhum 37.5 % vol., citron, cola",16 cl,15.00
-cocktail,Classiques,Negroni,"Campari 25 % vol., Martini rouge 15 % vol., gin 40 % vol., zeste d’orange",16 cl,16.00
-cocktail,Fruités,Frozen Fraise,"Rhum 37.5 % vol., lime, fraise, sucre",12 cl,16.00
-cocktail,Fruités,Frozen Mangue,"Rhum 37.5 % vol., lime, mangue, sucre",12 cl,16.00
-cocktail,Fruités,Frozen Passion,"Rhum 37.5 % vol., lime, maracuja, sucre",12 cl,16.00
-cocktail,Sans alcool,Virgin Mojito,"Lime, menthe, soda",16 cl,13.00
-cocktail,Sans alcool,Tropical,"Jus d’orange, jus d’ananas, grenadine",16 cl,13.00
-cocktail,Sans alcool,Virgin Frozen,Composition non indiquée,12 cl,13.00
-boisson,Digestifs,Amaretto,28 % vol.,4 cl,7.50
-boisson,Digestifs,Grappa,37.5 % vol.,4 cl,7.50
-boisson,Digestifs,Baileys,17 % vol.,4 cl,9.00
-boisson,Digestifs,Vieille prune,40 % vol.,4 cl,8.50
-boisson,Digestifs,Rhum,37.5 % vol.,4 cl,11.50
-boisson,Digestifs,Vodka,37.5 % vol.,4 cl,9.50
-boisson,Digestifs,Gin,40 % vol.,4 cl,11.50
-boisson,Digestifs,Abricotine,40 % vol.,4 cl,8.00
-boisson,Digestifs,Williamine,43 % vol.,4 cl,8.50
-boisson,Apéritifs,Campari,25 % vol.,4 cl,8.50
-boisson,Apéritifs,Kir,15 % vol.,4 cl,7.50
-boisson,Apéritifs,Martini,15 % vol.,4 cl,7.50
-boisson,Apéritifs,Suze,20 % vol.,4 cl,7.50
-boisson,Apéritifs,Ricard,45 % vol.,4 cl,9.50
+type,categorie,article,description,contenance,prix_chf,regimes
+plat,À partager,Nachos à partager,Sauce mexicaine fraîche maison,,16.50,
+plat,À partager,Mini arancini,Croustillants,,14.00,
+plat,À partager,Planchette maison,Charcuteries & fromages,,28.00,
+plat,À partager,Pimientos de Padrón frits,Fleur de sel,,12.00,
+plat,Plats,Moules marinières,Avec frites,,31.00,
+plat,Plats,Filets de perche meunière,"Frites, sauce tartare maison, salade verte",,39.00,
+plat,Plats,Insalata di mare,Fraîcheur citronnée,,38.00,
+plat,Plats,Entrecôte de bœuf,Avec frites,,38.00,
+supplement,Plats,Sauce au poivre vert,,,5.00,
+supplement,Plats,Sauce chimichurri,,,5.00,
+plat,Plats,Tartare de thon avocat,Frites et toast,,36.00,
+plat,Salades,Salade Tricolore,"Roquette, tomate cerise, burrata",,19.00,
+plat,Salades,Pastèque & feta,Fraîcheur d’été,,14.50,
+plat,Salades,Salade verte,,,8.00,
+plat,Salades,Salade mêlée,,,10.00,
+plat,Salades,Salade chèvre chaud,,,24.50,
+plat,Pâtes,Carbonara,,,25.00,
+plat,Pâtes,Spaghetti alle vongole,,,30.00,
+plat,Enfants,Chicken nuggets,,,14.00,
+plat,Enfants,Pâtes au beurre,,,10.00,
+dessert,Desserts,Trileçe,Le dessert star de l’été,,13.00,
+dessert,Desserts,Tiramisu,Maison,,14.00,
+vin,Vin blanc,Chasselas,Villeneuve — 12.4 % vol.,1 dl,5.00,
+vin,Vin blanc,Chasselas,Villeneuve — 12.4 % vol.,5 dl,25.00,
+vin,Vin blanc,Chasselas,Villeneuve — 12.4 % vol.,Bouteille,39.00,
+vin,Vin blanc,Chardonnay,Italie — 13 % vol.,1 dl,5.00,
+vin,Vin blanc,Chardonnay,Italie — 13 % vol.,5 dl,25.00,
+vin,Vin blanc,Chardonnay,Italie — 13 % vol.,Bouteille,36.00,
+vin,Vin blanc,Pinot Grigio,Italie — 13 % vol.,1 dl,5.00,
+vin,Vin blanc,Pinot Grigio,Italie — 13 % vol.,5 dl,25.00,
+vin,Vin blanc,Pinot Grigio,Italie — 13 % vol.,Bouteille,35.00,
+vin,Vin rouge,Gamay,Villeneuve — 13.8 % vol.,1 dl,6.00,
+vin,Vin rouge,Gamay,Villeneuve — 13.8 % vol.,5 dl,30.00,
+vin,Vin rouge,Gamay,Villeneuve — 13.8 % vol.,Bouteille,41.00,
+vin,Vin rouge,Pinot Noir,Villeneuve — 13.8 % vol.,1 dl,6.00,
+vin,Vin rouge,Pinot Noir,Villeneuve — 13.8 % vol.,5 dl,30.00,
+vin,Vin rouge,Pinot Noir,Villeneuve — 13.8 % vol.,Bouteille,41.00,
+vin,Vin rouge,Barbera,Italie — 13.5 % vol.,Bouteille,48.00,
+vin,Vin rouge,Chianti,Italie — 13 % vol.,1 dl,6.00,
+vin,Vin rouge,Chianti,Italie — 13 % vol.,5 dl,30.00,
+vin,Vin rouge,Chianti,Italie — 13 % vol.,Bouteille,42.00,
+vin,Vin rouge,Negramaro,Italie — 13 % vol.,Bouteille,34.00,
+vin,Vin rouge,Nero d’Avola,Italie — 14 % vol.,Bouteille,39.00,
+vin,Vin rouge,Aglianico,Italie — 13 % vol.,Bouteille,44.00,
+vin,Vin rouge,Primitivo,Italie — 14 % vol.,Bouteille,43.00,
+vin,Vin rouge,Montepulciano,Italie — 13.5 % vol.,1 dl,5.00,
+vin,Vin rouge,Montepulciano,Italie — 13.5 % vol.,5 dl,25.00,
+vin,Vin rouge,Montepulciano,Italie — 13.5 % vol.,Bouteille,35.00,
+vin,Vin rouge,Cannonau,Italie — 13.5 % vol.,Bouteille,46.00,
+vin,Vin rouge,Rosso Toscana,Italie — 13.5 % vol.,Bouteille,48.00,
+vin,Vin rouge,Ripasso Valpolicella,Italie — 14 % vol.,Bouteille,54.00,
+vin,Vin rosé,Œil de Perdrix,Suisse — 13 % vol.,1 dl,5.00,
+vin,Vin rosé,Œil de Perdrix,Suisse — 13 % vol.,5 dl,25.00,
+vin,Vin rosé,Œil de Perdrix,Suisse — 13 % vol.,Bouteille,39.00,
+vin,Bollicine,Moscato,Italie — 5.5 % vol.,1 dl,7.00,
+vin,Bollicine,Moscato,Italie — 5.5 % vol.,Bouteille,48.00,
+vin,Bollicine,Prosecco,Italie — 11 % vol.,1 dl,7.00,
+vin,Bollicine,Prosecco,Italie — 11 % vol.,Bouteille,48.00,
+boisson,Bières,Moretti pression,4.6 % vol.,2.5 dl,5.00,
+boisson,Bières,Moretti pression,4.6 % vol.,5 dl,9.00,
+boisson,Bières,Panachée / Monaco,4.6 % vol.,2.5 dl,5.00,
+boisson,Bières,Panachée / Monaco,4.6 % vol.,5 dl,9.00,
+boisson,Bières,Blonde 26,5 % vol.,33 cl,6.00,
+boisson,Bières,Ambrée 26,5.9 % vol.,33 cl,7.90,
+boisson,Bières,Blanche 26,5.7 % vol.,33 cl,7.90,
+boisson,Bières,Moretti 0 %,,33 cl,6.00,
+boisson,Boissons froides,Coca-Cola / Sprite / Fanta / Rivella rouge,,33 cl,5.80,
+boisson,Boissons froides,Schweppes Lemon,,20 cl,5.80,
+boisson,Boissons froides,Bitter rouge,,10 cl,5.80,
+boisson,Boissons froides,Ramseier,,33 cl,5.80,
+boisson,Boissons froides,Red Bull,,,6.50,
+boisson,Boissons froides,Thé froid pêche ou citron,,33 cl,5.80,
+boisson,Boissons froides,Sirop enfant,,20 cl,1.00,
+boisson,Boissons froides,Jus et nectar de fruits,"Orange, ananas ou abricot",20 cl,5.80,
+boisson,Eau filtrée,Plate,,50 cl,4.50,
+boisson,Eau filtrée,Gazeuse,,50 cl,5.00,
+cocktail,Signature,Passion Fresh,"Passoã 17 % vol., tonic, tranche d’orange",16 cl,14.00,
+cocktail,Signature,Malibu Refresh,"Malibu 21 % vol., jus d’orange",16 cl,14.00,
+cocktail,Mojito,Mojito,"Rhum 37.5 % vol., menthe, citron, soda",16 cl,16.00,
+cocktail,Mojito,Mojito fraise,"Rhum 37.5 % vol., menthe, fraise, citron, soda",16 cl,17.00,
+cocktail,Spritz,Aperol Spritz,"Aperol 11 % vol., prosecco 11.5 % vol., eau gazeuse, tranche d’orange",15 cl,13.00,
+cocktail,Spritz,Hugo,"Prosecco 11.5 % vol., sureau, citron, menthe",15 cl,14.00,
+cocktail,Spritz,Sarti Spritz,"Sarti Rosa 14 % vol., prosecco 11.5 % vol., eau gazeuse, citron vert",15 cl,14.00,
+cocktail,Spritz,Limoncello Spritz,"Limoncello 26 % vol., prosecco 11.5 % vol., eau gazeuse, tranche de citron",15 cl,13.00,
+cocktail,Spritz,Campari Spritz,"Campari 25 % vol., prosecco 11.5 % vol., eau gazeuse, tranche d’orange",15 cl,15.00,
+cocktail,Classiques,Gin Tonic,"Gin 40 % vol., tonic soda",14 cl,15.00,
+cocktail,Classiques,Campari Orange,"Campari 25 % vol., jus d’orange",15 cl,15.00,
+cocktail,Classiques,Amaretto Sour,"Amaretto 28 % vol., jus de citron, tranche d’orange",12 cl,14.00,
+cocktail,Classiques,Cuba Libre,"Rhum 37.5 % vol., citron, cola",16 cl,15.00,
+cocktail,Classiques,Negroni,"Campari 25 % vol., Martini rouge 15 % vol., gin 40 % vol., zeste d’orange",16 cl,16.00,
+cocktail,Fruités,Frozen Fraise,"Rhum 37.5 % vol., lime, fraise, sucre",12 cl,16.00,
+cocktail,Fruités,Frozen Mangue,"Rhum 37.5 % vol., lime, mangue, sucre",12 cl,16.00,
+cocktail,Fruités,Frozen Passion,"Rhum 37.5 % vol., lime, maracuja, sucre",12 cl,16.00,
+cocktail,Sans alcool,Virgin Mojito,"Lime, menthe, soda",16 cl,13.00,
+cocktail,Sans alcool,Tropical,"Jus d’orange, jus d’ananas, grenadine",16 cl,13.00,
+cocktail,Sans alcool,Virgin Frozen,Composition non indiquée,12 cl,13.00,
+boisson,Digestifs,Amaretto,28 % vol.,4 cl,7.50,
+boisson,Digestifs,Grappa,37.5 % vol.,4 cl,7.50,
+boisson,Digestifs,Baileys,17 % vol.,4 cl,9.00,
+boisson,Digestifs,Vieille prune,40 % vol.,4 cl,8.50,
+boisson,Digestifs,Rhum,37.5 % vol.,4 cl,11.50,
+boisson,Digestifs,Vodka,37.5 % vol.,4 cl,9.50,
+boisson,Digestifs,Gin,40 % vol.,4 cl,11.50,
+boisson,Digestifs,Abricotine,40 % vol.,4 cl,8.00,
+boisson,Digestifs,Williamine,43 % vol.,4 cl,8.50,
+boisson,Apéritifs,Campari,25 % vol.,4 cl,8.50,
+boisson,Apéritifs,Kir,15 % vol.,4 cl,7.50,
+boisson,Apéritifs,Martini,15 % vol.,4 cl,7.50,
+boisson,Apéritifs,Suze,20 % vol.,4 cl,7.50,
+boisson,Apéritifs,Ricard,45 % vol.,4 cl,9.50,

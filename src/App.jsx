@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BellRinging, CaretRight, CheckCircle, Clock, Minus, Plus, Sparkle, Trash, Warning, X } from '@phosphor-icons/react';
+import { ArrowLeft, Bell, BellRinging, CaretRight, CheckCircle, Clock, Coins, Minus, Plus, Sparkle, Star, Trash, Warning, X } from '@phosphor-icons/react';
 
 const FALLBACK_PRODUCTS = [
   { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/catalog-clean/nachos-a-partager.jpg', description: 'Sauce mexicaine fraîche maison' },
@@ -20,6 +20,12 @@ const ORDER_LIMIT = 5;     // au-delà de 5 commandes ouvertes, on fait patiente
 const WAIT_SECONDS = 30;   // durée du compte à rebours d'envoi quand c'est saturé
 const CART_KEY = `clickone:cart:${TABLE}`;
 const ORDERS_KEY = `clickone:orders:${TABLE}`;
+const SERVED_KEY = `clickone:served:${TABLE}`;
+const REVIEWED_KEY = `clickone:reviewed:${TABLE}`;
+const TIP_OPTIONS = [0, 5, 10, 15];
+// Catégories suggérées si absentes du panier (pas de vraies statistiques de
+// vente pour l'instant : simple heuristique de complémentarité).
+const PAIRING_CATEGORIES = ['Boissons', 'Desserts'];
 const loadStored = (key, fallback) => {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
   catch { return fallback; }
@@ -95,12 +101,21 @@ export function App() {
   const [openCount, setOpenCount] = useState(0);   // nombre de commandes ouvertes côté serveur
   const [countdown, setCountdown] = useState(0);    // secondes restantes avant envoi auto (0 = inactif)
   const [tableDisabled, setTableDisabled] = useState(false); // table désactivée par un serveur
+  const [regimeFilters, setRegimeFilters] = useState([]); // filtres régime/allergène actifs
+  const [tipPercent, setTipPercent] = useState(0);  // 0/5/10/15 ou 'custom'
+  const [customTip, setCustomTip] = useState('');
+  const [helpPending, setHelpPending] = useState(false); // appel serveur en cours
+  const [hasBeenServed, setHasBeenServed] = useState(() => loadStored(SERVED_KEY, false));
+  const [reviewSubmitted, setReviewSubmitted] = useState(() => loadStored(REVIEWED_KEY, false));
+  const [reviewOpen, setReviewOpen] = useState(false);
   const allOrdersRef = useRef(new Map());           // id -> statut (toutes les commandes)
   const queuedRef = useRef(null);                   // commande capturée en attente d'envoi
   const myOrdersRef = useRef([]);
   useEffect(() => { myOrdersRef.current = myOrders; }, [myOrders]);
   useEffect(() => { try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* stockage indisponible */ } }, [cart]);
   useEffect(() => { try { localStorage.setItem(ORDERS_KEY, JSON.stringify(myOrders)); } catch { /* stockage indisponible */ } }, [myOrders]);
+  useEffect(() => { try { localStorage.setItem(SERVED_KEY, JSON.stringify(hasBeenServed)); } catch { /* stockage indisponible */ } }, [hasBeenServed]);
+  useEffect(() => { try { localStorage.setItem(REVIEWED_KEY, JSON.stringify(reviewSubmitted)); } catch { /* stockage indisponible */ } }, [reviewSubmitted]);
 
   useEffect(() => {
     Promise.all([
@@ -117,21 +132,41 @@ export function App() {
         description: row.description || row.categorie,
         size: row.contenance,
         type: row.type,
+        regimes: (row.regimes || '').split(',').map((tag) => tag.trim()).filter(Boolean),
       }));
       if (loaded.length) setProducts(loaded);
     });
   }, []);
 
-  const visibleProducts = useMemo(() => products.filter((product) => {
+  const categoryProducts = useMemo(() => products.filter((product) => {
     const categoryMatch = product.category === category;
     const needle = search.trim().toLocaleLowerCase('fr');
     return categoryMatch && (!needle || `${product.name} ${product.description}`.toLocaleLowerCase('fr').includes(needle));
   }), [category, products, search]);
+  // Étiquettes régime/allergène réellement présentes dans cette catégorie (le
+  // filtre n'apparaît que si le restaurateur a renseigné cette info).
+  const availableRegimes = useMemo(
+    () => [...new Set(categoryProducts.flatMap((product) => product.regimes || []))],
+    [categoryProducts],
+  );
+  const visibleProducts = useMemo(
+    () => categoryProducts.filter((product) => regimeFilters.every((tag) => (product.regimes || []).includes(tag))),
+    [categoryProducts, regimeFilters],
+  );
   const isSharePage = category === 'À partager';
 
   const lines = products.filter((product) => cart[product.id]).map((product) => ({ ...product, quantity: cart[product.id] }));
   const itemCount = lines.reduce((sum, line) => sum + line.quantity, 0);
-  const total = lines.reduce((sum, line) => sum + line.quantity * line.price, 0);
+  const subtotal = lines.reduce((sum, line) => sum + line.quantity * line.price, 0);
+  const tipAmount = tipPercent === 'custom' ? Math.max(0, Number(customTip) || 0) : subtotal * (tipPercent / 100);
+  const total = subtotal + tipAmount;
+  // Suggestion "ça complète bien votre commande" : première catégorie absente
+  // du panier parmi les catégories qui se marient bien avec un repas.
+  const cartCategories = new Set(lines.map((line) => line.category));
+  const suggestion = PAIRING_CATEGORIES
+    .filter((cat) => !cartCategories.has(cat))
+    .map((cat) => products.find((product) => product.category === cat))
+    .find(Boolean);
 
   function flash(message) {
     setToast(message);
@@ -153,6 +188,47 @@ export function App() {
     });
   }
 
+  function toggleRegime(tag) {
+    setRegimeFilters((current) => (current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]));
+  }
+
+  async function callServer() {
+    if (helpPending) return;
+    setHelpPending(true);
+    try {
+      const response = await fetch('/api/help', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table: TABLE }),
+      });
+      if (response.status === 429) {
+        flash('Appel déjà envoyé, un serveur arrive');
+        return;
+      }
+      if (!response.ok) throw new Error('help failed');
+      flash('Un serveur va venir à votre table');
+    } catch {
+      setHelpPending(false);
+      flash('Échec de l’appel, réessayez');
+    }
+  }
+
+  async function submitReview(rating, comment) {
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table: TABLE, rating, comment }),
+      });
+      if (!response.ok) throw new Error('review failed');
+      setReviewSubmitted(true);
+      setReviewOpen(false);
+      flash('Merci pour votre retour !');
+    } catch {
+      flash('Échec de l’envoi, réessayez');
+    }
+  }
+
   function recomputeOpen() {
     let count = 0;
     for (const status of allOrdersRef.current.values()) if (status === 'pending') count += 1;
@@ -163,12 +239,20 @@ export function App() {
   async function submitOrder(payload) {
     setCart({});
     setCartOpen(false);
+    setTipPercent(0);
+    setCustomTip('');
     flash('Commande envoyée aux serveurs');
     try {
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table: TABLE, total: payload.total, items: payload.items }),
+        body: JSON.stringify({
+          table: TABLE,
+          items: payload.items,
+          subtotal: payload.subtotal,
+          tip: payload.tip,
+          total: payload.total,
+        }),
       });
       // Sécurité serveur : table désactivée entre-temps.
       if (response.status === 403) {
@@ -191,6 +275,8 @@ export function App() {
       return;
     }
     const payload = {
+      subtotal,
+      tip: tipAmount,
       total,
       items: lines.map((line) => ({ name: line.name, price: line.price, quantity: line.quantity, size: line.size || '' })),
     };
@@ -231,6 +317,7 @@ export function App() {
         allOrdersRef.current = new Map(message.orders.map((order) => [order.id, order.status]));
         recomputeOpen();
         setTableDisabled(message.statuses?.[TABLE] === 'disabled');
+        setHelpPending((message.helpCalls || []).some((call) => String(call.table) === String(TABLE)));
         // Réconcilie mes commandes persistées avec la réalité du serveur.
         const mine = myOrdersRef.current;
         if (mine.length) {
@@ -258,6 +345,12 @@ export function App() {
         return;
       }
 
+      if (message.type === 'help' || message.type === 'helpResolved') {
+        const table = message.call?.table ?? message.table;
+        if (String(table) === String(TABLE)) setHelpPending(message.type === 'help');
+        return;
+      }
+
       if (message.type !== 'order') return;
       const { order } = message;
       allOrdersRef.current.set(order.id, order.status);
@@ -268,6 +361,7 @@ export function App() {
       if (order.status === 'accepted') {
         flash('Votre commande a été acceptée ✅');
         setMyOrders((current) => current.filter((entry) => entry.id !== order.id));
+        setHasBeenServed(true);
       } else if (order.status === 'rejected') {
         flash('Votre commande a été refusée');
         setMyOrders((current) => current.filter((entry) => entry.id !== order.id));
@@ -282,15 +376,45 @@ export function App() {
       <img className="botanical-deco botanical-deco-bottom" src="/botanical-corner.png" alt="" aria-hidden="true" />
       <header className="demo-header">
         <button className="brand" aria-label="Accueil ClickOne"><img src="/clickone-qrfast-logo.svg" alt="ClickOne" /></button>
-        <button className="table-pill" aria-label={`Table ${TABLE}`}>Table {TABLE} <img src="/table-icon-3d.png" alt="" /></button>
+        <div className="header-pills">
+          <button className="table-pill" aria-label={`Table ${TABLE}`}>Table {TABLE} <img src="/table-icon-3d.png" alt="" /></button>
+          <button
+            className={`call-server-button ${helpPending ? 'is-pending' : ''}`}
+            onClick={callServer}
+            disabled={helpPending}
+            aria-label="Appeler un serveur"
+          >
+            <Bell size={18} weight={helpPending ? 'fill' : 'regular'} />
+            {helpPending ? 'En route…' : 'Appeler'}
+          </button>
+        </div>
       </header>
 
       <main className="client-view">
         {tableDisabled && <section className="status-banner disabled"><div className="status-icon"><Warning weight="fill" /></div><div><strong>Table réservée</strong><span>Vous pouvez consulter le menu, mais l’envoi de commande est indisponible. Veuillez appeler un serveur.</span></div></section>}
         {countdown > 0 && <section className="status-banner pending"><div className="status-icon"><Clock weight="fill" /></div><div><strong>Trop de commandes en cours</strong><span>Votre commande part automatiquement dans {countdown}s…</span></div></section>}
+        {helpPending && <section className="status-banner help"><div className="status-icon"><Bell weight="fill" /></div><div><strong>Appel envoyé</strong><span>Un serveur va venir à votre table.</span></div></section>}
         {myOrders.length > 0 && <OrdersBanner orders={myOrders} />}
+        {hasBeenServed && !reviewSubmitted && (
+          <button className="review-cta" onClick={() => setReviewOpen(true)}>
+            <Star size={18} weight="fill" /> Noter votre repas
+          </button>
+        )}
         <CategoryNav category={category} setCategory={setCategory} />
         <CategoryTitle category={category} isSharePage={isSharePage} />
+        {availableRegimes.length > 0 && (
+          <div className="regime-filters" aria-label="Filtrer par régime">
+            {availableRegimes.map((tag) => (
+              <button
+                key={tag}
+                className={regimeFilters.includes(tag) ? 'active' : ''}
+                onClick={() => toggleRegime(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
         {isSharePage ? (
           <ShareCategory
             products={visibleProducts}
@@ -334,7 +458,57 @@ export function App() {
       {cartOpen && <div className="overlay" role="dialog" aria-modal="true" aria-label="Votre commande"><button className="overlay-backdrop" onClick={() => setCartOpen(false)} aria-label="Fermer" /><section className="cart-sheet">
         <div className="sheet-topline"><div><p className="eyebrow">Table {TABLE}</p><h2>Votre commande</h2></div><button className="icon-button" onClick={() => setCartOpen(false)} aria-label="Fermer"><X size={22} /></button></div>
         <div className="cart-lines">{lines.map((line) => <div className="cart-line" key={line.id}><img src={line.image} alt="" loading="lazy" decoding="async" /><div><strong>{line.name}</strong><span>{money(line.price)}</span></div><div className="mini-stepper"><button onClick={() => changeQuantity(line, -1)} aria-label="Retirer">{line.quantity === 1 ? <Trash /> : <Minus />}</button><strong>{line.quantity}</strong><button onClick={() => changeQuantity(line, 1)} aria-label="Ajouter"><Plus /></button></div></div>)}</div>
-        <div className="cart-total"><span>Total</span><strong>{money(total)}</strong></div>
+
+        {suggestion && (
+          <button className="cart-suggestion" onClick={() => add(suggestion)}>
+            <img src={suggestion.image} alt="" loading="lazy" decoding="async" />
+            <div>
+              <span className="cart-suggestion-label"><Sparkle size={13} weight="fill" /> Ça complète bien votre commande</span>
+              <strong>{suggestion.name}</strong>
+              <span>{money(suggestion.price)}</span>
+            </div>
+            <Plus size={18} weight="bold" />
+          </button>
+        )}
+
+        <div className="tip-picker">
+          <span className="tip-label"><Coins size={16} weight="fill" /> Pourboire</span>
+          <div className="tip-options">
+            {TIP_OPTIONS.map((percent) => (
+              <button
+                key={percent}
+                className={tipPercent === percent ? 'active' : ''}
+                onClick={() => { setTipPercent(percent); setCustomTip(''); }}
+              >
+                {percent === 0 ? 'Aucun' : `${percent}%`}
+              </button>
+            ))}
+            <button
+              className={tipPercent === 'custom' ? 'active' : ''}
+              onClick={() => setTipPercent('custom')}
+            >
+              Autre
+            </button>
+          </div>
+          {tipPercent === 'custom' && (
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              inputMode="decimal"
+              placeholder="Montant en CHF"
+              value={customTip}
+              onChange={(event) => setCustomTip(event.target.value)}
+              className="tip-custom-input"
+            />
+          )}
+        </div>
+
+        <div className="cart-total">
+          <div className="cart-total-line"><span>Sous-total</span><span>{money(subtotal)}</span></div>
+          {tipAmount > 0 && <div className="cart-total-line"><span>Pourboire</span><span>{money(tipAmount)}</span></div>}
+          <div className="cart-total-line cart-total-grand"><span>Total</span><strong>{money(total)}</strong></div>
+        </div>
         {tableDisabled ? (
           <div className="table-disabled-note"><Warning size={20} weight="fill" /><span>Cette table est réservée. Veuillez appeler un serveur.</span></div>
         ) : (
@@ -342,7 +516,45 @@ export function App() {
         )}
         <p className="payment-note">Aucun paiement maintenant. Vous réglerez en partant.</p>
       </section></div>}
+      {reviewOpen && <ReviewModal onClose={() => setReviewOpen(false)} onSubmit={submitReview} />}
       {toast && <div className="toast"><CheckCircle weight="fill" /> {toast}</div>}
+    </div>
+  );
+}
+
+// Note rapide privée envoyée au restaurateur (jamais publiée publiquement).
+function ReviewModal({ onClose, onSubmit }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  return (
+    <div className="overlay" role="dialog" aria-modal="true" aria-label="Noter votre repas">
+      <button className="overlay-backdrop" onClick={onClose} aria-label="Fermer" />
+      <section className="review-sheet">
+        <div className="sheet-topline"><h2>Votre repas ?</h2><button className="icon-button" onClick={onClose} aria-label="Fermer"><X size={22} /></button></div>
+        <div className="review-stars" role="radiogroup" aria-label="Note sur 5">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              key={value}
+              role="radio"
+              aria-checked={rating === value}
+              aria-label={`${value} étoile${value > 1 ? 's' : ''}`}
+              onClick={() => setRating(value)}
+            >
+              <Star size={32} weight={value <= rating ? 'fill' : 'regular'} />
+            </button>
+          ))}
+        </div>
+        <textarea
+          placeholder="Un commentaire pour l'équipe ? (facultatif)"
+          value={comment}
+          onChange={(event) => setComment(event.target.value)}
+          maxLength={500}
+        />
+        <p className="review-note">Cet avis est privé : envoyé uniquement à l'équipe du restaurant.</p>
+        <button className="primary-button" disabled={!rating} onClick={() => onSubmit(rating, comment)}>
+          Envoyer
+        </button>
+      </section>
     </div>
   );
 }

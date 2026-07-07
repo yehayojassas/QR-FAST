@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BellRinging, CaretRight, CheckCircle, ForkKnife, Gear, X, XCircle } from "@phosphor-icons/react";
+import { Bell, BellRinging, CaretRight, CheckCircle, ForkKnife, Gear, Star, X, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
@@ -45,6 +45,14 @@ function resolveApiBase() {
 }
 const API_BASE = resolveApiBase();
 
+// Enregistre le service worker (app shell en cache, jamais les appels /api/) :
+// démarrage instantané sur la tablette + résiste aux coupures Wi-Fi ponctuelles.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js", { scope: "/staff" }).catch(() => {});
+  });
+}
+
 function configureMenuAddress() {
   const current = localStorage.getItem("clickone_api") || "";
   const value = window.prompt(
@@ -57,7 +65,95 @@ function configureMenuAddress() {
   }
 }
 
+const STAFF_PIN_KEY = "clickone_staff_pin";
+
 function StaffApp() {
+  const [authorized, setAuthorized] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const storedPin = sessionStorage.getItem(STAFF_PIN_KEY) || "";
+    fetch(`${API_BASE}/api/staff/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: storedPin }),
+    })
+      .then((response) => response.json())
+      .then((data) => setAuthorized(Boolean(data.ok)))
+      .catch(() => setAuthorized(false))
+      .finally(() => setCheckingAuth(false));
+  }, []);
+
+  if (checkingAuth) return null;
+  if (!authorized) return <StaffLogin onSuccess={() => setAuthorized(true)} />;
+  return <StaffDashboard />;
+}
+
+// Fetch qui ajoute le code PIN de l'équipe et renvoie à l'écran de connexion
+// si le serveur le refuse (PIN changé/retiré entre-temps).
+async function staffFetch(url, options = {}) {
+  const pin = sessionStorage.getItem(STAFF_PIN_KEY) || "";
+  const response = await fetch(url, {
+    ...options,
+    headers: { ...(options.headers || {}), "X-Staff-Pin": pin },
+  });
+  if (response.status === 401) {
+    sessionStorage.removeItem(STAFF_PIN_KEY);
+    window.location.reload();
+  }
+  return response;
+}
+
+function StaffLogin({ onSuccess }) {
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+
+  async function submit(event) {
+    event.preventDefault();
+    setPending(true);
+    setError("");
+    try {
+      const response = await fetch(`${API_BASE}/api/staff/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        sessionStorage.setItem(STAFF_PIN_KEY, pin);
+        onSuccess();
+      } else {
+        setError("Code incorrect.");
+      }
+    } catch {
+      setError("Connexion impossible, réessayez.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="staff-login">
+      <form className="staff-login-card" onSubmit={submit}>
+        <h1>Accès équipe</h1>
+        <p>Entrez le code fourni par le restaurant.</p>
+        <input
+          type="password"
+          inputMode="numeric"
+          autoFocus
+          value={pin}
+          onChange={(event) => setPin(event.target.value)}
+          placeholder="Code PIN"
+        />
+        {error && <span className="staff-login-error">{error}</span>}
+        <button type="submit" disabled={pending}>{pending ? "…" : "Entrer"}</button>
+      </form>
+    </div>
+  );
+}
+
+function StaffDashboard() {
   const [orders, setOrders] = useState([]);
   const [connected, setConnected] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
@@ -70,8 +166,42 @@ function StaffApp() {
   const [tableViewId, setTableViewId] = useState(null);
   // Statuts des tables, source de vérité = backend (synchronisé en temps réel).
   const [statuses, setStatuses] = useState({});
+  // Appels "un serveur svp" en attente, par table.
+  const [helpCalls, setHelpCalls] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
   const audioRef = useRef(null);
   const highlightTimer = useRef(null);
+
+  useEffect(() => {
+    staffFetch(`${API_BASE}/api/reviews`)
+      .then((response) => (response.ok ? response.json() : []))
+      .then(setReviews)
+      .catch(() => {});
+  }, []);
+
+  // Empêche la tablette de s'éteindre pendant le service. Le wake lock est
+  // relâché automatiquement par le navigateur quand l'onglet passe en arrière-
+  // plan : on le redemande à chaque retour au premier plan.
+  useEffect(() => {
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
+      } catch {
+        /* non-critique (ex: batterie faible) */
+      }
+    }
+    requestWakeLock();
+    function handleVisibility() {
+      if (document.visibilityState === "visible") requestWakeLock();
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      wakeLock?.release().catch(() => {});
+    };
+  }, []);
 
   useEffect(() => {
     const source = new EventSource(`${API_BASE}/api/stream`);
@@ -82,12 +212,20 @@ function StaffApp() {
       if (message.type === "snapshot") {
         setOrders(message.orders);
         if (message.statuses) setStatuses(message.statuses);
+        setHelpCalls(message.helpCalls || []);
       } else if (message.type === "tableStatus") {
         setStatuses((current) => ({ ...current, [message.table]: message.status }));
       } else if (message.type === "ordersCleared") {
         // Table remise "Libre" : on retire les commandes servies effacées.
         const removed = new Set(message.ids);
         setOrders((current) => current.filter((order) => !removed.has(order.id)));
+      } else if (message.type === "help") {
+        beep();
+        setHelpCalls((current) => [...current.filter((call) => call.table !== message.call.table), message.call]);
+      } else if (message.type === "helpResolved") {
+        setHelpCalls((current) => current.filter((call) => call.table !== message.table));
+      } else if (message.type === "review") {
+        setReviews((current) => [message.review, ...current]);
       } else if (message.type === "order") {
         setOrders((current) => {
           const isNew = !current.some((o) => o.id === message.order.id);
@@ -127,7 +265,7 @@ function StaffApp() {
     setStatuses((current) => ({ ...current, [String(table)]: status }));
     setSelectedTable(null);
     try {
-      await fetch(`${API_BASE}/api/tables/${table}/status`, {
+      await staffFetch(`${API_BASE}/api/tables/${table}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -139,7 +277,7 @@ function StaffApp() {
 
   async function act(order, action) {
     try {
-      await fetch(`${API_BASE}/api/orders/${order.id}/${action}`, { method: "POST" });
+      await staffFetch(`${API_BASE}/api/orders/${order.id}/${action}`, { method: "POST" });
       if (action === "accept") setTableStatus(order.table, "occupied");
     } catch {
       /* ignoré : le flux temps réel resynchronise l'état */
@@ -215,6 +353,17 @@ function StaffApp() {
     setTableViewId(tableId);
   }
 
+  async function resolveHelp(table) {
+    setHelpCalls((current) => current.filter((call) => call.table !== table));
+    try {
+      await staffFetch(`${API_BASE}/api/help/${table}/resolve`, { method: "POST" });
+    } catch {
+      /* ignoré : le flux temps réel resynchronise l'état */
+    }
+  }
+
+  const callingTables = new Set(helpCalls.map((call) => call.table));
+
   function getTableStatus(tableId) {
     if (statuses[tableId] === "disabled") return "disabled";
     if (pendingByTable[tableId]?.length) return "occupied";
@@ -230,6 +379,10 @@ function StaffApp() {
             <span />
             {connected ? (pending.length ? `${pending.length} en attente` : "En ligne") : "Connexion…"}
           </span>
+          <button className="staff-reviews-toggle" onClick={() => setReviewsOpen(true)} aria-label="Voir les avis clients" title="Avis clients">
+            <Star size={20} weight="fill" />
+            {reviews.length > 0 && <span className="staff-reviews-count">{reviews.length}</span>}
+          </button>
           <button className="staff-settings" onClick={configureMenuAddress} aria-label="Configurer l'adresse du menu" title="Configurer l'adresse du menu">
             <Gear size={20} />
           </button>
@@ -248,6 +401,7 @@ function StaffApp() {
             const tableOrders = pendingByTable[table.id] || [];
             const status = getTableStatus(table.id);
             const hasOrder = tableOrders.length > 0;
+            const isCalling = callingTables.has(table.id);
             return (
               <div
                 className={`table-zone table-zone-${table.id} ${hasOrder ? "has-order" : ""} ${highlightedTable === table.id ? "is-highlighted" : ""} ${selectedTable === table.id ? "is-active" : ""}`}
@@ -255,15 +409,18 @@ function StaffApp() {
                 key={table.id}
               >
                 <button
-                  className={`restaurant-table ${table.shape} status-${status} ${selectedTable === table.id ? "is-selected" : ""}`}
+                  className={`restaurant-table ${table.shape} status-${status} ${selectedTable === table.id ? "is-selected" : ""} ${isCalling ? "is-calling" : ""}`}
                   onClick={(event) => {
                     event.stopPropagation();
                     toggleStatusMenu(table.id, event.currentTarget);
                   }}
-                  aria-label={`Table ${table.id}, ${STATUS_LABELS[status]}${tableOrders.length ? `, ${tableOrders.length} commande${tableOrders.length > 1 ? "s" : ""} en attente` : ""}`}
+                  aria-label={`Table ${table.id}, ${STATUS_LABELS[status]}${tableOrders.length ? `, ${tableOrders.length} commande${tableOrders.length > 1 ? "s" : ""} en attente` : ""}${isCalling ? ", appelle un serveur" : ""}`}
                 >
                   {hasOrder && (
                     <span className="table-order-count" aria-hidden="true">{tableOrders.length}</span>
+                  )}
+                  {isCalling && (
+                    <span className="table-calling-badge" aria-hidden="true"><Bell size={16} weight="fill" /></span>
                   )}
                   <span className={`table-status-dot ${status}`} />
                   <span className="chairs" aria-hidden="true">
@@ -279,6 +436,12 @@ function StaffApp() {
                     className={`table-status-popover ${popoverPos.up ? "popover-up" : "popover-down"} popover-${popoverPos.align}`}
                     onClick={(event) => event.stopPropagation()}
                   >
+                    {isCalling && (
+                      <button className="popover-resolve-help" onClick={() => resolveHelp(table.id)}>
+                        <Bell size={16} weight="fill" />
+                        Appel traité
+                      </button>
+                    )}
                     {STATUS_OPTIONS.map((option) => (
                       <button
                         className={option === status ? "active" : ""}
@@ -357,6 +520,18 @@ function StaffApp() {
               ))}
             </div>
 
+            {detailOrder.tip > 0 && (
+              <div className="order-detail-total order-detail-subline">
+                <span>Sous-total</span>
+                <span>{money(detailOrder.subtotal ?? (detailOrder.total - detailOrder.tip))}</span>
+              </div>
+            )}
+            {detailOrder.tip > 0 && (
+              <div className="order-detail-total order-detail-subline">
+                <span>Pourboire</span>
+                <span>{money(detailOrder.tip)}</span>
+              </div>
+            )}
             <div className="order-detail-total">
               <span>Total</span>
               <strong>{money(detailOrder.total)}</strong>
@@ -382,6 +557,47 @@ function StaffApp() {
           onFree={() => { setTableStatus(tableViewId, "free"); setTableViewId(null); }}
         />
       )}
+
+      {reviewsOpen && <ReviewsPanel reviews={reviews} onClose={() => setReviewsOpen(false)} />}
+    </div>
+  );
+}
+
+// Panneau des avis clients : privé, jamais visible des clients ni public.
+function ReviewsPanel({ reviews, onClose }) {
+  const average = reviews.length
+    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+    : null;
+  return (
+    <div className="order-detail-overlay" role="dialog" aria-modal="true" aria-label="Avis clients">
+      <button className="order-detail-backdrop" onClick={onClose} aria-label="Fermer" />
+      <section className="order-detail reviews-panel">
+        <header className="order-detail-head">
+          <div>
+            <span className="order-detail-table">Avis clients</span>
+            {average && <span className="order-detail-time">Moyenne : {average}/5 sur {reviews.length} avis</span>}
+          </div>
+          <button className="order-detail-close" onClick={onClose} aria-label="Fermer">
+            <X size={20} />
+          </button>
+        </header>
+        <div className="reviews-list">
+          {reviews.length === 0 && <p className="reviews-empty">Aucun avis pour l'instant.</p>}
+          {reviews.map((review) => (
+            <div className="review-row" key={review.id}>
+              <div className="review-row-head">
+                <span className="review-row-stars">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <Star key={value} size={14} weight={value <= review.rating ? "fill" : "regular"} />
+                  ))}
+                </span>
+                <span className="review-row-meta">Table {review.table} · {formatTime(review.createdAt)}</span>
+              </div>
+              {review.comment && <p className="review-row-comment">{review.comment}</p>}
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
