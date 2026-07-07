@@ -46,17 +46,26 @@ const toHelpCall = (row) => ({
   createdAt: new Date(row.created_at).getTime(),
 });
 
-// --- Code PIN de l'équipe (protège les actions serveur : accepter/refuser une
-// commande, changer le statut d'une table). Défini via la variable
-// d'environnement STAFF_PIN. Si absente (dev local), les routes restent
-// ouvertes pour ne pas bloquer le développement.
+// --- Codes PIN de l'équipe (deux rôles) ---
+// STAFF_PIN : accepter/refuser une commande, changer le statut d'une table.
+// OWNER_PIN : tout ce que fait STAFF_PIN + les actions réservées au
+// propriétaire (ex: consulter les avis clients). Si OWNER_PIN n'est pas
+// défini, ces actions retombent sur STAFF_PIN (pas de distinction de rôle).
+// Si aucun des deux n'est défini (dev local), tout reste ouvert.
 const STAFF_PIN = process.env.STAFF_PIN || "";
-if (!STAFF_PIN) {
-  console.warn("[staff-auth] STAFF_PIN non défini : les actions serveur sont ouvertes sans protection.");
+const OWNER_PIN = process.env.OWNER_PIN || "";
+if (!STAFF_PIN && !OWNER_PIN) {
+  console.warn("[staff-auth] Aucun PIN défini : les actions serveur sont ouvertes sans protection.");
 }
 function requireStaffPin(req, res, next) {
-  if (!STAFF_PIN) return next();
-  if (req.get("x-staff-pin") === STAFF_PIN) return next();
+  const validPins = [STAFF_PIN, OWNER_PIN].filter(Boolean);
+  if (!validPins.length) return next();
+  if (validPins.includes(req.get("x-staff-pin"))) return next();
+  return res.status(401).json({ error: "unauthorized" });
+}
+function requireOwnerPin(req, res, next) {
+  if (!OWNER_PIN) return requireStaffPin(req, res, next);
+  if (req.get("x-staff-pin") === OWNER_PIN) return next();
   return res.status(401).json({ error: "unauthorized" });
 }
 
@@ -115,10 +124,12 @@ app.get("/api/stream", async (req, res) => {
   });
 });
 
-// --- Connexion de l'équipe (vérifie le code PIN sans exposer d'action) ---
+// --- Connexion de l'équipe (vérifie le code PIN et renvoie le rôle associé) ---
 app.post("/api/staff/login", (req, res) => {
   const { pin } = req.body || {};
-  if (!STAFF_PIN || pin === STAFF_PIN) return res.json({ ok: true });
+  if (!STAFF_PIN && !OWNER_PIN) return res.json({ ok: true, role: "owner" });
+  if (OWNER_PIN && pin === OWNER_PIN) return res.json({ ok: true, role: "owner" });
+  if (STAFF_PIN && pin === STAFF_PIN) return res.json({ ok: true, role: "staff" });
   return res.status(401).json({ ok: false });
 });
 
@@ -228,7 +239,7 @@ app.post("/api/reviews", async (req, res) => {
     return res.status(500).json({ error: "server_error" });
   }
 });
-app.get("/api/reviews", requireStaffPin, async (_req, res) => {
+app.get("/api/reviews", requireOwnerPin, async (_req, res) => {
   const result = await pool.query('select * from reviews order by created_at desc limit 50');
   return res.json(result.rows.map(toReview));
 });

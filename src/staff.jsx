@@ -47,9 +47,13 @@ const API_BASE = resolveApiBase();
 
 // Enregistre le service worker (app shell en cache, jamais les appels /api/) :
 // démarrage instantané sur la tablette + résiste aux coupures Wi-Fi ponctuelles.
+// Portée dynamique : "/" quand cette page est la racine du site (clickone-serveurs,
+// dédié à l'équipe), "/staff" quand elle vit sous /staff sur clickone-menu (pour ne
+// jamais affecter le menu client qui partage cette même origine).
 if ("serviceWorker" in navigator) {
+  const swScope = window.location.pathname.startsWith("/staff") ? "/staff" : "/";
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { scope: "/staff" }).catch(() => {});
+    navigator.serviceWorker.register("/sw.js", { scope: swScope }).catch(() => {});
   });
 }
 
@@ -66,10 +70,12 @@ function configureMenuAddress() {
 }
 
 const STAFF_PIN_KEY = "clickone_staff_pin";
+const STAFF_ROLE_KEY = "clickone_staff_role";
 
 function StaffApp() {
   const [authorized, setAuthorized] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [role, setRole] = useState(() => sessionStorage.getItem(STAFF_ROLE_KEY) || "staff");
 
   useEffect(() => {
     const storedPin = sessionStorage.getItem(STAFF_PIN_KEY) || "";
@@ -79,14 +85,22 @@ function StaffApp() {
       body: JSON.stringify({ pin: storedPin }),
     })
       .then((response) => response.json())
-      .then((data) => setAuthorized(Boolean(data.ok)))
+      .then((data) => {
+        setAuthorized(Boolean(data.ok));
+        if (data.role) {
+          setRole(data.role);
+          sessionStorage.setItem(STAFF_ROLE_KEY, data.role);
+        }
+      })
       .catch(() => setAuthorized(false))
       .finally(() => setCheckingAuth(false));
   }, []);
 
   if (checkingAuth) return null;
-  if (!authorized) return <StaffLogin onSuccess={() => setAuthorized(true)} />;
-  return <StaffDashboard />;
+  if (!authorized) {
+    return <StaffLogin onSuccess={(loggedRole) => { setRole(loggedRole); setAuthorized(true); }} />;
+  }
+  return <StaffDashboard role={role} />;
 }
 
 // Fetch qui ajoute le code PIN de l'équipe et renvoie à l'écran de connexion
@@ -99,6 +113,7 @@ async function staffFetch(url, options = {}) {
   });
   if (response.status === 401) {
     sessionStorage.removeItem(STAFF_PIN_KEY);
+    sessionStorage.removeItem(STAFF_ROLE_KEY);
     window.location.reload();
   }
   return response;
@@ -122,7 +137,8 @@ function StaffLogin({ onSuccess }) {
       const data = await response.json();
       if (data.ok) {
         sessionStorage.setItem(STAFF_PIN_KEY, pin);
-        onSuccess();
+        sessionStorage.setItem(STAFF_ROLE_KEY, data.role || "staff");
+        onSuccess(data.role || "staff");
       } else {
         setError("Code incorrect.");
       }
@@ -153,7 +169,8 @@ function StaffLogin({ onSuccess }) {
   );
 }
 
-function StaffDashboard() {
+function StaffDashboard({ role }) {
+  const isOwner = role === "owner";
   const [orders, setOrders] = useState([]);
   const [connected, setConnected] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
@@ -174,6 +191,10 @@ function StaffDashboard() {
   const highlightTimer = useRef(null);
 
   useEffect(() => {
+    // Réservé au propriétaire : un compte "staff" n'a pas le droit de lire
+    // /api/reviews, inutile (et risqué, ça déclencherait une déconnexion) de
+    // tenter l'appel avec son PIN.
+    if (!isOwner) return;
     staffFetch(`${API_BASE}/api/reviews`)
       .then((response) => (response.ok ? response.json() : []))
       .then(setReviews)
@@ -375,14 +396,17 @@ function StaffDashboard() {
       <div className="staff-title">
         <h1>Commandes</h1>
         <div className="staff-title-right">
+          <span className={`role-pill ${isOwner ? "owner" : ""}`}>{isOwner ? "Propriétaire" : "Équipe"}</span>
           <span className={`live-pill ${pending.length ? "ringing" : ""}`}>
             <span />
             {connected ? (pending.length ? `${pending.length} en attente` : "En ligne") : "Connexion…"}
           </span>
-          <button className="staff-reviews-toggle" onClick={() => setReviewsOpen(true)} aria-label="Voir les avis clients" title="Avis clients">
-            <Star size={20} weight="fill" />
-            {reviews.length > 0 && <span className="staff-reviews-count">{reviews.length}</span>}
-          </button>
+          {isOwner && (
+            <button className="staff-reviews-toggle" onClick={() => setReviewsOpen(true)} aria-label="Voir les avis clients" title="Avis clients">
+              <Star size={20} weight="fill" />
+              {reviews.length > 0 && <span className="staff-reviews-count">{reviews.length}</span>}
+            </button>
+          )}
           <button className="staff-settings" onClick={configureMenuAddress} aria-label="Configurer l'adresse du menu" title="Configurer l'adresse du menu">
             <Gear size={20} />
           </button>

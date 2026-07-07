@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["server.js"],
       "port": 3000
+    },
+    {
+      "name": "clickone-serveurs-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "preview", "--host", "127.0.0.1", "--port", "4500", "--strictPort"],
+      "port": 4500
     }
   ]
 }
