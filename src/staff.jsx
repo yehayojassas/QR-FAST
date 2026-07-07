@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Bell, BellRinging, CaretRight, CheckCircle, ForkKnife, Gear, Star, X, XCircle } from "@phosphor-icons/react";
+import { Bell, BellRinging, CaretRight, CheckCircle, ForkKnife, Gear, SignOut, Star, X, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
@@ -71,6 +71,14 @@ function configureMenuAddress() {
 
 const STAFF_PIN_KEY = "clickone_staff_pin";
 const STAFF_ROLE_KEY = "clickone_staff_role";
+
+// Efface le code retenu et revient à l'écran de connexion (ex: pour se
+// reconnecter avec le code propriétaire à la place du code équipe).
+function signOut() {
+  sessionStorage.removeItem(STAFF_PIN_KEY);
+  sessionStorage.removeItem(STAFF_ROLE_KEY);
+  window.location.reload();
+}
 
 function StaffApp() {
   const [authorized, setAuthorized] = useState(false);
@@ -409,6 +417,9 @@ function StaffDashboard({ role }) {
           )}
           <button className="staff-settings" onClick={configureMenuAddress} aria-label="Configurer l'adresse du menu" title="Configurer l'adresse du menu">
             <Gear size={20} />
+          </button>
+          <button className="staff-settings" onClick={signOut} aria-label="Changer de code / se déconnecter" title="Changer de code">
+            <SignOut size={20} />
           </button>
         </div>
       </div>
