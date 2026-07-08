@@ -1559,6 +1559,46 @@ h1, h2, p { margin-top: 0; }
 .dashboard-top-item:last-child { border-bottom: 0; }
 .dashboard-top-item strong { color: var(--terracotta); }
 
+.dashboard-export { padding: 10px 0 14px; border-top: 1px solid rgba(20, 16, 12, .08); }
+.dashboard-export h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #6f6a62;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dashboard-export-form { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+.dashboard-export-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8c877f;
+  flex: 1;
+  min-width: 120px;
+}
+.dashboard-export-form input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(20, 16, 12, .12);
+  font-size: 14px;
+  font-family: inherit;
+}
+.dashboard-export-form button {
+  padding: 0 18px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--olive);
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .dashboard-history { padding-top: 14px; border-top: 1px solid rgba(20, 16, 12, .08); }
 .dashboard-history-form { display: flex; gap: 8px; margin-bottom: 10px; }
 .dashboard-history-form input {

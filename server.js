@@ -46,6 +46,32 @@ const toHelpCall = (row) => ({
   createdAt: new Date(row.created_at).getTime(),
 });
 
+// --- Export comptable (CSV) ---
+const ORDER_STATUS_LABELS = { accepted: "Servie", rejected: "Refusée", pending: "En attente" };
+function csvField(value) {
+  const str = String(value ?? "");
+  return /[;"\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+function ordersToCsv(orders) {
+  const header = ["Date", "Heure", "Table", "Statut", "Articles", "Sous-total CHF", "Pourboire CHF", "Total CHF"];
+  const rows = orders.map((order) => {
+    const date = new Date(order.createdAt);
+    const items = order.items.map((item) => `${item.quantity}x ${item.name}`).join(", ");
+    return [
+      date.toLocaleDateString("fr-CH", { timeZone: "Europe/Zurich" }),
+      date.toLocaleTimeString("fr-CH", { timeZone: "Europe/Zurich", hour: "2-digit", minute: "2-digit" }),
+      order.table,
+      ORDER_STATUS_LABELS[order.status] || order.status,
+      items,
+      order.subtotal.toFixed(2),
+      order.tip.toFixed(2),
+      order.total.toFixed(2),
+    ].map(csvField).join(";");
+  });
+  // BOM en tête : sans lui, Excel affiche les accents comme des caractères illisibles.
+  return "﻿" + [header.join(";"), ...rows].join("\r\n");
+}
+
 // --- Codes PIN de l'équipe (deux rôles) ---
 // STAFF_PIN : accepter/refuser une commande, changer le statut d'une table.
 // OWNER_PIN : tout ce que fait STAFF_PIN + les actions réservées au
@@ -293,6 +319,32 @@ app.get("/api/tables/:table/history", requireOwnerPin, async (req, res) => {
     [table],
   );
   return res.json(result.rows.map(toOrder));
+});
+
+// Export comptable : toutes les commandes (tous statuts) sur une période
+// donnée, au format CSV. `from`/`to` sont des timestamps ISO calculés côté
+// client à partir des bornes de journée locales (même logique que le
+// dashboard, voir /api/dashboard/summary).
+app.get("/api/export/orders.csv", requireOwnerPin, async (req, res) => {
+  const from = new Date(req.query.from);
+  const to = new Date(req.query.to);
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+    return res.status(400).json({ error: "Paramètres from/to invalides" });
+  }
+  try {
+    const result = await pool.query(
+      `select * from orders where created_at >= $1 and created_at <= $2 order by created_at asc`,
+      [from.toISOString(), to.toISOString()],
+    );
+    const csv = ordersToCsv(result.rows.map(toOrder));
+    const filename = `commandes_${from.toISOString().slice(0, 10)}_${to.toISOString().slice(0, 10)}.csv`;
+    res.set("Content-Type", "text/csv; charset=utf-8");
+    res.set("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.send(csv);
+  } catch (err) {
+    console.error("[export] csv error:", err.message);
+    return res.status(500).json({ error: "server_error" });
+  }
 });
 
 // --- Le serveur accepte ou refuse ---

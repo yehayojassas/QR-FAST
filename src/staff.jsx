@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Bell, BellRinging, CaretRight, ChartBar, CheckCircle, ClockCounterClockwise, ForkKnife, Gear, SignOut, Star, X, XCircle } from "@phosphor-icons/react";
+import { Bell, BellRinging, CaretRight, ChartBar, CheckCircle, ClockCounterClockwise, DownloadSimple, ForkKnife, Gear, SignOut, Star, X, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
 const formatTime = (ms) =>
   new Date(ms).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+// Format attendu par un <input type="date"> (yyyy-mm-dd), sur la date LOCALE
+// de l'appareil (pas UTC : toISOString ferait glisser le jour selon l'heure).
+const toDateInputValue = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 // Plan de salle en 4-2-4 (couloir central). Les tables ne portent plus de carte
 // de commande : seulement un badge compteur + un halo léger. Le détail des
 // commandes vit dans le panneau latéral "Commandes en attente".
@@ -613,6 +617,14 @@ function DashboardPanel({ onClose }) {
   const [tableQuery, setTableQuery] = useState("");
   const [history, setHistory] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [exportFrom, setExportFrom] = useState(() => {
+    const start = new Date();
+    start.setDate(1);
+    return toDateInputValue(start);
+  });
+  const [exportTo, setExportTo] = useState(() => toDateInputValue(new Date()));
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   useEffect(() => {
     // Début de journée dans le fuseau horaire du navigateur (pas celui du
@@ -638,6 +650,36 @@ function DashboardPanel({ onClose }) {
       setHistory([]);
     } finally {
       setHistoryLoading(false);
+    }
+  }
+
+  async function downloadExport() {
+    if (!exportFrom || !exportTo) return;
+    setExporting(true);
+    setExportError("");
+    try {
+      // Bornes de journée LOCALES (00:00 → 23:59:59.999) converties en ISO,
+      // même logique que "since" plus haut : le jour compte selon l'appareil
+      // de l'équipe, pas selon le fuseau du serveur.
+      const from = new Date(`${exportFrom}T00:00:00`).toISOString();
+      const to = new Date(`${exportTo}T23:59:59.999`).toISOString();
+      const response = await staffFetch(
+        `${API_BASE}/api/export/orders.csv?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      );
+      if (!response.ok) throw new Error("export_failed");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `commandes_${exportFrom}_${exportTo}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError("Impossible de télécharger l'export.");
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -691,6 +733,24 @@ function DashboardPanel({ onClose }) {
             )}
           </>
         )}
+
+        <div className="dashboard-export">
+          <h3><DownloadSimple size={16} weight="bold" /> Export comptable</h3>
+          <div className="dashboard-export-form">
+            <label>
+              Du
+              <input type="date" value={exportFrom} onChange={(event) => setExportFrom(event.target.value)} max={exportTo} />
+            </label>
+            <label>
+              Au
+              <input type="date" value={exportTo} onChange={(event) => setExportTo(event.target.value)} min={exportFrom} />
+            </label>
+            <button type="button" onClick={downloadExport} disabled={exporting}>
+              {exporting ? "…" : "Télécharger (CSV)"}
+            </button>
+          </div>
+          {exportError && <p className="dashboard-loading">{exportError}</p>}
+        </div>
 
         <div className="dashboard-history">
           <h3><ClockCounterClockwise size={16} weight="bold" /> Historique d'une table</h3>
