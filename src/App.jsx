@@ -378,15 +378,17 @@ export function App() {
         <button className="brand" aria-label="Accueil ClickOne"><img src="/clickone-qrfast-logo.svg" alt="ClickOne" /></button>
         <div className="header-pills">
           <button className="table-pill" aria-label={`Table ${TABLE}`}>Table {TABLE} <img src="/table-icon-3d.png" alt="" /></button>
-          <button
-            className={`call-server-button ${helpPending ? 'is-pending' : ''}`}
-            onClick={callServer}
-            disabled={helpPending}
-            aria-label="Appeler un serveur"
-          >
-            <Bell size={18} weight={helpPending ? 'fill' : 'regular'} />
-            {helpPending ? 'En route…' : 'Appeler'}
-          </button>
+          {tableDisabled && (
+            <button
+              className={`call-server-button ${helpPending ? 'is-pending' : ''}`}
+              onClick={callServer}
+              disabled={helpPending}
+              aria-label="Appeler un serveur"
+            >
+              <Bell size={18} weight={helpPending ? 'fill' : 'regular'} />
+              {helpPending ? 'En route…' : 'Appeler'}
+            </button>
+          )}
         </div>
       </header>
 
