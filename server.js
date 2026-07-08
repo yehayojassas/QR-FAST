@@ -102,7 +102,7 @@ app.get("/api/stream", async (req, res) => {
   res.write("retry: 3000\n\n");
   try {
     const [orders, statuses, helpCalls] = await Promise.all([
-      pool.query('select * from orders order by created_at asc'),
+      pool.query('select * from orders where cleared_at is null order by created_at asc'),
       pool.query('select * from table_statuses'),
       pool.query('select * from help_calls'),
     ]);
@@ -244,6 +244,57 @@ app.get("/api/reviews", requireOwnerPin, async (_req, res) => {
   return res.json(result.rows.map(toReview));
 });
 
+// --- Dashboard (réservé au propriétaire) ---
+// Résumé des ventes depuis un instant donné (le client envoie le début de
+// journée dans SON fuseau horaire local, pour ne pas se tromper sur la
+// frontière du jour selon où est hébergé le serveur).
+app.get("/api/dashboard/summary", requireOwnerPin, async (req, res) => {
+  const since = new Date(req.query.since);
+  if (Number.isNaN(since.getTime())) {
+    return res.status(400).json({ error: "Paramètre since invalide" });
+  }
+  try {
+    const result = await pool.query(
+      `select * from orders where status = 'accepted' and created_at >= $1 order by created_at asc`,
+      [since.toISOString()],
+    );
+    const orders = result.rows.map(toOrder);
+    const revenue = orders.reduce(
+      (acc, order) => ({
+        subtotal: acc.subtotal + order.subtotal,
+        tip: acc.tip + order.tip,
+        total: acc.total + order.total,
+      }),
+      { subtotal: 0, tip: 0, total: 0 },
+    );
+    const itemCounts = new Map();
+    for (const order of orders) {
+      for (const item of order.items) {
+        itemCounts.set(item.name, (itemCounts.get(item.name) || 0) + item.quantity);
+      }
+    }
+    const topItems = [...itemCounts.entries()]
+      .map(([name, quantity]) => ({ name, quantity }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 8);
+    return res.json({ ordersCount: orders.length, revenue, topItems });
+  } catch (err) {
+    console.error("[dashboard] summary error:", err.message);
+    return res.status(500).json({ error: "server_error" });
+  }
+});
+
+// Historique complet d'une table (toutes ses commandes passées, pas
+// seulement celles de la visite en cours).
+app.get("/api/tables/:table/history", requireOwnerPin, async (req, res) => {
+  const table = String(req.params.table);
+  const result = await pool.query(
+    `select * from orders where "table" = $1 order by created_at desc limit 100`,
+    [table],
+  );
+  return res.json(result.rows.map(toOrder));
+});
+
 // --- Le serveur accepte ou refuse ---
 async function updateStatus(req, res, status) {
   try {
@@ -263,9 +314,11 @@ async function updateStatus(req, res, status) {
 app.post("/api/orders/:id/accept", requireStaffPin, (req, res) => updateStatus(req, res, "accepted"));
 app.post("/api/orders/:id/reject", requireStaffPin, (req, res) => updateStatus(req, res, "rejected"));
 
-// Liste des commandes (chargement initial / secours).
+// Liste des commandes actives (chargement initial / secours). Ne comprend
+// pas les commandes des tables déjà libérées (voir /api/tables/:table/history
+// et /api/dashboard/summary pour l'historique complet).
 app.get("/api/orders", async (_req, res) => {
-  const result = await pool.query('select * from orders order by created_at asc');
+  const result = await pool.query('select * from orders where cleared_at is null order by created_at asc');
   return res.json(result.rows.map(toOrder));
 });
 
@@ -300,10 +353,12 @@ app.post("/api/tables/:table/status", requireStaffPin, async (req, res) => {
       const helpDeleted = await pool.query('delete from help_calls where "table" = $1 returning "table"', [table]);
       if (helpDeleted.rows.length) broadcast({ type: "helpResolved", table });
 
-      // Remettre une table en "Libre" = les clients sont partis : on efface les
-      // commandes acceptées (servies) attachées à cette table.
+      // Remettre une table en "Libre" = les clients sont partis : les commandes
+      // servies sortent du tableau de bord en direct, mais restent en base
+      // pour l'historique et le dashboard (jamais supprimées).
       const cleared = await pool.query(
-        `delete from orders where "table" = $1 and status = 'accepted' returning id`,
+        `update orders set cleared_at = now()
+         where "table" = $1 and status = 'accepted' and cleared_at is null returning id`,
         [table],
       );
       if (cleared.rows.length) {

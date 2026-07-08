@@ -9,8 +9,13 @@ create table if not exists orders (
   tip numeric not null default 0,
   total numeric not null default 0,
   status text not null default 'pending',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Renseigné quand la table est libérée : la commande sort du tableau de
+  -- bord en direct mais reste en base pour l'historique/le dashboard.
+  cleared_at timestamptz
 );
+-- Migration douce pour une base déjà créée avant l'ajout de cette colonne.
+alter table orders add column if not exists cleared_at timestamptz;
 
 create table if not exists table_statuses (
   "table" text primary key,
@@ -32,3 +37,5 @@ create table if not exists reviews (
 
 create index if not exists orders_table_idx on orders ("table");
 create index if not exists orders_status_idx on orders (status);
+create index if not exists orders_cleared_at_idx on orders (cleared_at);
+create index if not exists orders_created_at_idx on orders (created_at);

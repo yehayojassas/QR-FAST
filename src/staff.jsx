@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Bell, BellRinging, CaretRight, CheckCircle, ForkKnife, Gear, SignOut, Star, X, XCircle } from "@phosphor-icons/react";
+import { Bell, BellRinging, CaretRight, ChartBar, CheckCircle, ClockCounterClockwise, ForkKnife, Gear, SignOut, Star, X, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
@@ -195,6 +195,7 @@ function StaffDashboard({ role }) {
   const [helpCalls, setHelpCalls] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
   const audioRef = useRef(null);
   const highlightTimer = useRef(null);
 
@@ -410,6 +411,11 @@ function StaffDashboard({ role }) {
             {connected ? (pending.length ? `${pending.length} en attente` : "En ligne") : "Connexion…"}
           </span>
           {isOwner && (
+            <button className="staff-reviews-toggle" onClick={() => setDashboardOpen(true)} aria-label="Voir le dashboard" title="Dashboard">
+              <ChartBar size={20} weight="fill" />
+            </button>
+          )}
+          {isOwner && (
             <button className="staff-reviews-toggle" onClick={() => setReviewsOpen(true)} aria-label="Voir les avis clients" title="Avis clients">
               <Star size={20} weight="fill" />
               {reviews.length > 0 && <span className="staff-reviews-count">{reviews.length}</span>}
@@ -594,6 +600,126 @@ function StaffDashboard({ role }) {
       )}
 
       {reviewsOpen && <ReviewsPanel reviews={reviews} onClose={() => setReviewsOpen(false)} />}
+      {dashboardOpen && <DashboardPanel onClose={() => setDashboardOpen(false)} />}
+    </div>
+  );
+}
+
+// Dashboard du jour (réservé au propriétaire) : chiffre d'affaires, nombre de
+// commandes, plats les plus vendus, + recherche de l'historique d'une table.
+function DashboardPanel({ onClose }) {
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tableQuery, setTableQuery] = useState("");
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    // Début de journée dans le fuseau horaire du navigateur (pas celui du
+    // serveur), pour que "aujourd'hui" corresponde à la réalité locale.
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+    staffFetch(`${API_BASE}/api/dashboard/summary?since=${since.toISOString()}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then(setSummary)
+      .catch(() => setSummary(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function lookupHistory(event) {
+    event.preventDefault();
+    if (!tableQuery.trim()) return;
+    setHistoryLoading(true);
+    setHistory(null);
+    try {
+      const response = await staffFetch(`${API_BASE}/api/tables/${encodeURIComponent(tableQuery.trim())}/history`);
+      setHistory(response.ok ? await response.json() : []);
+    } catch {
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  return (
+    <div className="order-detail-overlay" role="dialog" aria-modal="true" aria-label="Dashboard">
+      <button className="order-detail-backdrop" onClick={onClose} aria-label="Fermer" />
+      <section className="order-detail dashboard-panel">
+        <header className="order-detail-head">
+          <div>
+            <span className="order-detail-table">Dashboard</span>
+            <span className="order-detail-time">Aujourd'hui</span>
+          </div>
+          <button className="order-detail-close" onClick={onClose} aria-label="Fermer">
+            <X size={20} />
+          </button>
+        </header>
+
+        {loading && <p className="dashboard-loading">Chargement…</p>}
+        {!loading && !summary && <p className="dashboard-loading">Impossible de charger le dashboard.</p>}
+        {!loading && summary && (
+          <>
+            <div className="dashboard-stats">
+              <div className="dashboard-stat">
+                <span>Ventes</span>
+                <strong>{money(summary.revenue.subtotal)}</strong>
+              </div>
+              <div className="dashboard-stat">
+                <span>Pourboires</span>
+                <strong>{money(summary.revenue.tip)}</strong>
+              </div>
+              <div className="dashboard-stat">
+                <span>Total encaissé</span>
+                <strong>{money(summary.revenue.total)}</strong>
+              </div>
+              <div className="dashboard-stat">
+                <span>Commandes</span>
+                <strong>{summary.ordersCount}</strong>
+              </div>
+            </div>
+
+            {summary.topItems.length > 0 && (
+              <div className="dashboard-top-items">
+                <h3>Plats les plus vendus</h3>
+                {summary.topItems.map((item) => (
+                  <div className="dashboard-top-item" key={item.name}>
+                    <span>{item.name}</span>
+                    <strong>× {item.quantity}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="dashboard-history">
+          <h3><ClockCounterClockwise size={16} weight="bold" /> Historique d'une table</h3>
+          <form onSubmit={lookupHistory} className="dashboard-history-form">
+            <input
+              value={tableQuery}
+              onChange={(event) => setTableQuery(event.target.value)}
+              placeholder="N° de table"
+              inputMode="numeric"
+            />
+            <button type="submit" disabled={historyLoading}>{historyLoading ? "…" : "Voir"}</button>
+          </form>
+          {history && history.length === 0 && <p className="dashboard-loading">Aucune commande pour cette table.</p>}
+          {history && history.length > 0 && (
+            <div className="dashboard-history-list">
+              {history.map((order) => (
+                <div className="dashboard-history-row" key={order.id}>
+                  <div className="dashboard-history-row-head">
+                    <span>{new Date(order.createdAt).toLocaleString("fr-CH", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className={`dashboard-history-status status-${order.status}`}>{order.status === "accepted" ? "Servie" : order.status === "rejected" ? "Refusée" : "En attente"}</span>
+                  </div>
+                  <p>{order.items.map((item) => `${item.quantity}× ${item.name}`).join(", ")}</p>
+                  <strong>{money(order.total)}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
