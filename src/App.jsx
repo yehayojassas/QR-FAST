@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Bell, BellRinging, CaretRight, CheckCircle, Clock, Coins, Minus, Plus, Sparkle, Star, Trash, Warning, X } from '@phosphor-icons/react';
+import { ArrowLeft, Bell, BellRinging, CaretRight, CheckCircle, Clock, Coins, Minus, Plus, Sparkle, Trash, Warning, X } from '@phosphor-icons/react';
 
 const FALLBACK_PRODUCTS = [
   { id: 1, name: 'Nachos à partager', price: 16.5, category: 'À partager', image: '/products/catalog-clean/nachos-a-partager.jpg', description: 'Sauce mexicaine fraîche maison' },
@@ -20,8 +20,6 @@ const ORDER_LIMIT = 5;     // au-delà de 5 commandes ouvertes, on fait patiente
 const WAIT_SECONDS = 30;   // durée du compte à rebours d'envoi quand c'est saturé
 const CART_KEY = `clickone:cart:${TABLE}`;
 const ORDERS_KEY = `clickone:orders:${TABLE}`;
-const SERVED_KEY = `clickone:served:${TABLE}`;
-const REVIEWED_KEY = `clickone:reviewed:${TABLE}`;
 const TIP_OPTIONS = [0, 5, 10, 15];
 // Catégories suggérées si absentes du panier (pas de vraies statistiques de
 // vente pour l'instant : simple heuristique de complémentarité).
@@ -105,17 +103,12 @@ export function App() {
   const [tipPercent, setTipPercent] = useState(0);  // 0/5/10/15 ou 'custom'
   const [customTip, setCustomTip] = useState('');
   const [helpPending, setHelpPending] = useState(false); // appel serveur en cours
-  const [hasBeenServed, setHasBeenServed] = useState(() => loadStored(SERVED_KEY, false));
-  const [reviewSubmitted, setReviewSubmitted] = useState(() => loadStored(REVIEWED_KEY, false));
-  const [reviewOpen, setReviewOpen] = useState(false);
   const allOrdersRef = useRef(new Map());           // id -> statut (toutes les commandes)
   const queuedRef = useRef(null);                   // commande capturée en attente d'envoi
   const myOrdersRef = useRef([]);
   useEffect(() => { myOrdersRef.current = myOrders; }, [myOrders]);
   useEffect(() => { try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* stockage indisponible */ } }, [cart]);
   useEffect(() => { try { localStorage.setItem(ORDERS_KEY, JSON.stringify(myOrders)); } catch { /* stockage indisponible */ } }, [myOrders]);
-  useEffect(() => { try { localStorage.setItem(SERVED_KEY, JSON.stringify(hasBeenServed)); } catch { /* stockage indisponible */ } }, [hasBeenServed]);
-  useEffect(() => { try { localStorage.setItem(REVIEWED_KEY, JSON.stringify(reviewSubmitted)); } catch { /* stockage indisponible */ } }, [reviewSubmitted]);
 
   useEffect(() => {
     Promise.all([
@@ -210,22 +203,6 @@ export function App() {
     } catch {
       setHelpPending(false);
       flash('Échec de l’appel, réessayez');
-    }
-  }
-
-  async function submitReview(rating, comment) {
-    try {
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table: TABLE, rating, comment }),
-      });
-      if (!response.ok) throw new Error('review failed');
-      setReviewSubmitted(true);
-      setReviewOpen(false);
-      flash('Merci pour votre retour !');
-    } catch {
-      flash('Échec de l’envoi, réessayez');
     }
   }
 
@@ -361,7 +338,6 @@ export function App() {
       if (order.status === 'accepted') {
         flash('Votre commande a été acceptée ✅');
         setMyOrders((current) => current.filter((entry) => entry.id !== order.id));
-        setHasBeenServed(true);
       } else if (order.status === 'rejected') {
         flash('Votre commande a été refusée');
         setMyOrders((current) => current.filter((entry) => entry.id !== order.id));
@@ -397,11 +373,6 @@ export function App() {
         {countdown > 0 && <section className="status-banner pending"><div className="status-icon"><Clock weight="fill" /></div><div><strong>Trop de commandes en cours</strong><span>Votre commande part automatiquement dans {countdown}s…</span></div></section>}
         {helpPending && <section className="status-banner help"><div className="status-icon"><Bell weight="fill" /></div><div><strong>Appel envoyé</strong><span>Un serveur va venir à votre table.</span></div></section>}
         {myOrders.length > 0 && <OrdersBanner orders={myOrders} />}
-        {hasBeenServed && !reviewSubmitted && (
-          <button className="review-cta" onClick={() => setReviewOpen(true)}>
-            <Star size={18} weight="fill" /> Noter votre repas
-          </button>
-        )}
         <CategoryNav category={category} setCategory={setCategory} />
         <CategoryTitle category={category} isSharePage={isSharePage} />
         {availableRegimes.length > 0 && (
@@ -518,45 +489,7 @@ export function App() {
         )}
         <p className="payment-note">Aucun paiement maintenant. Vous réglerez en partant.</p>
       </section></div>}
-      {reviewOpen && <ReviewModal onClose={() => setReviewOpen(false)} onSubmit={submitReview} />}
       {toast && <div className="toast"><CheckCircle weight="fill" /> {toast}</div>}
-    </div>
-  );
-}
-
-// Note rapide privée envoyée au restaurateur (jamais publiée publiquement).
-function ReviewModal({ onClose, onSubmit }) {
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-label="Noter votre repas">
-      <button className="overlay-backdrop" onClick={onClose} aria-label="Fermer" />
-      <section className="review-sheet">
-        <div className="sheet-topline"><h2>Votre repas ?</h2><button className="icon-button" onClick={onClose} aria-label="Fermer"><X size={22} /></button></div>
-        <div className="review-stars" role="radiogroup" aria-label="Note sur 5">
-          {[1, 2, 3, 4, 5].map((value) => (
-            <button
-              key={value}
-              role="radio"
-              aria-checked={rating === value}
-              aria-label={`${value} étoile${value > 1 ? 's' : ''}`}
-              onClick={() => setRating(value)}
-            >
-              <Star size={32} weight={value <= rating ? 'fill' : 'regular'} />
-            </button>
-          ))}
-        </div>
-        <textarea
-          placeholder="Un commentaire pour l'équipe ? (facultatif)"
-          value={comment}
-          onChange={(event) => setComment(event.target.value)}
-          maxLength={500}
-        />
-        <p className="review-note">Cet avis est privé : envoyé uniquement à l'équipe du restaurant.</p>
-        <button className="primary-button" disabled={!rating} onClick={() => onSubmit(rating, comment)}>
-          Envoyer
-        </button>
-      </section>
     </div>
   );
 }

@@ -751,54 +751,6 @@ h1, h2, p { margin-top: 0; }
   color: #fff;
 }
 
-/* CTA "Noter votre repas" */
-.review-cta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 48px;
-  margin-bottom: 18px;
-  border-radius: 15px;
-  border: 1px solid var(--line);
-  background: rgba(255, 252, 246, .7);
-  color: var(--olive);
-  font-weight: 700;
-}
-.review-cta svg { color: var(--terracotta); }
-
-.review-sheet {
-  position: relative;
-  width: min(100%, 430px);
-  max-height: 92vh;
-  overflow-y: auto;
-  background: var(--paper);
-  border-radius: 28px 28px 0 0;
-  padding: 18px 22px 28px;
-  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
-  animation: rise .25s ease-out;
-  display: grid;
-  gap: 16px;
-}
-.review-stars {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-.review-stars button { color: #d9a441; padding: 4px; }
-.review-sheet textarea {
-  width: 100%;
-  min-height: 90px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  font-family: inherit;
-  font-size: 14px;
-  resize: vertical;
-}
-.review-note { margin: 0; font-size: 12px; color: var(--muted); text-align: center; }
-
 .overlay {
   position: fixed;
   inset: 0;
@@ -1198,7 +1150,7 @@ h1, h2, p { margin-top: 0; }
 .live-pill.ringing { border-color: rgba(201, 77, 37, .28); color: var(--terracotta); }
 .live-pill.ringing span { background: var(--terracotta); box-shadow: 0 0 0 5px rgba(201, 77, 37, .12); }
 .staff-settings,
-.staff-reviews-toggle {
+.staff-icon-toggle {
   width: 40px;
   height: 40px;
   border: 1px solid #e6e6e6;
@@ -1209,23 +1161,6 @@ h1, h2, p { margin-top: 0; }
   color: var(--muted);
   position: relative;
 }
-.staff-reviews-toggle { color: #d9a441; }
-.staff-reviews-count {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: var(--terracotta);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-}
-
 .table-status-legend {
   width: max-content;
   max-width: calc(100vw - 48px);
@@ -1506,16 +1441,6 @@ h1, h2, p { margin-top: 0; }
   font-weight: 700;
   color: #8c877f;
 }
-
-.reviews-panel { display: flex; flex-direction: column; gap: 4px; }
-.reviews-list { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; }
-.reviews-empty { color: #8c877f; font-size: 14px; text-align: center; padding: 24px 0; }
-.review-row { padding: 13px 0; border-bottom: 1px solid rgba(20, 16, 12, .06); }
-.review-row:last-child { border-bottom: 0; }
-.review-row-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.review-row-stars { display: flex; gap: 2px; color: #d9a441; }
-.review-row-meta { font-size: 12px; font-weight: 700; color: #8c877f; white-space: nowrap; }
-.review-row-comment { margin: 6px 0 0; font-size: 14px; color: #2a261f; }
 
 .dashboard-panel { display: flex; flex-direction: column; gap: 4px; }
 .dashboard-loading { color: #8c877f; font-size: 14px; text-align: center; padding: 20px 0; }

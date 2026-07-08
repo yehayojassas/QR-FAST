@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json());
 
 // --- Base de données (Supabase Postgres) ---
-// Toutes les commandes/statuts/appels/avis sont persistés ici : ils survivent
+// Toutes les commandes/statuts/appels sont persistés ici : ils survivent
 // aux redémarrages et à la mise en veille de Render (contrairement à un
 // stockage en mémoire).
 const { Pool } = pg;
@@ -32,13 +32,6 @@ const toOrder = (row) => ({
   tip: Number(row.tip),
   total: Number(row.total),
   status: row.status,
-  createdAt: new Date(row.created_at).getTime(),
-});
-const toReview = (row) => ({
-  id: row.id,
-  table: row.table,
-  rating: row.rating,
-  comment: row.comment || "",
   createdAt: new Date(row.created_at).getTime(),
 });
 const toHelpCall = (row) => ({
@@ -75,8 +68,8 @@ function ordersToCsv(orders) {
 // --- Codes PIN de l'équipe (deux rôles) ---
 // STAFF_PIN : accepter/refuser une commande, changer le statut d'une table.
 // OWNER_PIN : tout ce que fait STAFF_PIN + les actions réservées au
-// propriétaire (ex: consulter les avis clients). Si OWNER_PIN n'est pas
-// défini, ces actions retombent sur STAFF_PIN (pas de distinction de rôle).
+// propriétaire (ex: consulter le dashboard journalier). Si OWNER_PIN n'est
+// pas défini, ces actions retombent sur STAFF_PIN (pas de distinction de rôle).
 // Si aucun des deux n'est défini (dev local), tout reste ouvert.
 const STAFF_PIN = process.env.STAFF_PIN || "";
 const OWNER_PIN = process.env.OWNER_PIN || "";
@@ -241,33 +234,6 @@ app.post("/api/help/:table/resolve", requireStaffPin, async (req, res) => {
     console.error("[help] resolve error:", err.message);
     return res.status(500).json({ error: "server_error" });
   }
-});
-
-// --- Avis clients (privés) ---
-// Note rapide envoyée après un repas servi. Jamais publiée : réservée à
-// l'équipe, consultable uniquement avec le code PIN.
-app.post("/api/reviews", async (req, res) => {
-  const { table, rating, comment } = req.body || {};
-  const score = Number(rating);
-  if (!Number.isInteger(score) || score < 1 || score > 5) {
-    return res.status(400).json({ error: "Note invalide" });
-  }
-  try {
-    const result = await pool.query(
-      `insert into reviews ("table", rating, comment) values ($1, $2, $3) returning *`,
-      [String(table || "?"), score, comment ? String(comment).slice(0, 500) : ""],
-    );
-    const review = toReview(result.rows[0]);
-    broadcast({ type: "review", review });
-    return res.json({ ok: true });
-  } catch (err) {
-    console.error("[reviews] insert error:", err.message);
-    return res.status(500).json({ error: "server_error" });
-  }
-});
-app.get("/api/reviews", requireOwnerPin, async (_req, res) => {
-  const result = await pool.query('select * from reviews order by created_at desc limit 50');
-  return res.json(result.rows.map(toReview));
 });
 
 // --- Dashboard (réservé au propriétaire) ---

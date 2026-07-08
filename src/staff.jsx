@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Bell, BellRinging, CaretRight, ChartBar, CheckCircle, ClockCounterClockwise, DownloadSimple, ForkKnife, Gear, SignOut, Star, X, XCircle } from "@phosphor-icons/react";
+import { Bell, BellRinging, CaretRight, ChartBar, CheckCircle, ClockCounterClockwise, DownloadSimple, ForkKnife, Gear, SignOut, X, XCircle } from "@phosphor-icons/react";
 import "./styles.css";
 
 const money = (value) => `${Number(value).toFixed(2)} CHF`;
@@ -197,22 +197,9 @@ function StaffDashboard({ role }) {
   const [statuses, setStatuses] = useState({});
   // Appels "un serveur svp" en attente, par table.
   const [helpCalls, setHelpCalls] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [reviewsOpen, setReviewsOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
   const audioRef = useRef(null);
   const highlightTimer = useRef(null);
-
-  useEffect(() => {
-    // Réservé au propriétaire : un compte "staff" n'a pas le droit de lire
-    // /api/reviews, inutile (et risqué, ça déclencherait une déconnexion) de
-    // tenter l'appel avec son PIN.
-    if (!isOwner) return;
-    staffFetch(`${API_BASE}/api/reviews`)
-      .then((response) => (response.ok ? response.json() : []))
-      .then(setReviews)
-      .catch(() => {});
-  }, []);
 
   // Empêche la tablette de s'éteindre pendant le service. Le wake lock est
   // relâché automatiquement par le navigateur quand l'onglet passe en arrière-
@@ -258,8 +245,6 @@ function StaffDashboard({ role }) {
         setHelpCalls((current) => [...current.filter((call) => call.table !== message.call.table), message.call]);
       } else if (message.type === "helpResolved") {
         setHelpCalls((current) => current.filter((call) => call.table !== message.table));
-      } else if (message.type === "review") {
-        setReviews((current) => [message.review, ...current]);
       } else if (message.type === "order") {
         setOrders((current) => {
           const isNew = !current.some((o) => o.id === message.order.id);
@@ -415,14 +400,8 @@ function StaffDashboard({ role }) {
             {connected ? (pending.length ? `${pending.length} en attente` : "En ligne") : "Connexion…"}
           </span>
           {isOwner && (
-            <button className="staff-reviews-toggle" onClick={() => setDashboardOpen(true)} aria-label="Voir le dashboard" title="Dashboard">
+            <button className="staff-icon-toggle" onClick={() => setDashboardOpen(true)} aria-label="Voir le dashboard" title="Dashboard">
               <ChartBar size={20} weight="fill" />
-            </button>
-          )}
-          {isOwner && (
-            <button className="staff-reviews-toggle" onClick={() => setReviewsOpen(true)} aria-label="Voir les avis clients" title="Avis clients">
-              <Star size={20} weight="fill" />
-              {reviews.length > 0 && <span className="staff-reviews-count">{reviews.length}</span>}
             </button>
           )}
           <button className="staff-settings" onClick={configureMenuAddress} aria-label="Configurer l'adresse du menu" title="Configurer l'adresse du menu">
@@ -603,7 +582,6 @@ function StaffDashboard({ role }) {
         />
       )}
 
-      {reviewsOpen && <ReviewsPanel reviews={reviews} onClose={() => setReviewsOpen(false)} />}
       {dashboardOpen && <DashboardPanel onClose={() => setDashboardOpen(false)} />}
     </div>
   );
@@ -778,45 +756,6 @@ function DashboardPanel({ onClose }) {
               ))}
             </div>
           )}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-// Panneau des avis clients : privé, jamais visible des clients ni public.
-function ReviewsPanel({ reviews, onClose }) {
-  const average = reviews.length
-    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
-    : null;
-  return (
-    <div className="order-detail-overlay" role="dialog" aria-modal="true" aria-label="Avis clients">
-      <button className="order-detail-backdrop" onClick={onClose} aria-label="Fermer" />
-      <section className="order-detail reviews-panel">
-        <header className="order-detail-head">
-          <div>
-            <span className="order-detail-table">Avis clients</span>
-            {average && <span className="order-detail-time">Moyenne : {average}/5 sur {reviews.length} avis</span>}
-          </div>
-          <button className="order-detail-close" onClick={onClose} aria-label="Fermer">
-            <X size={20} />
-          </button>
-        </header>
-        <div className="reviews-list">
-          {reviews.length === 0 && <p className="reviews-empty">Aucun avis pour l'instant.</p>}
-          {reviews.map((review) => (
-            <div className="review-row" key={review.id}>
-              <div className="review-row-head">
-                <span className="review-row-stars">
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <Star key={value} size={14} weight={value <= review.rating ? "fill" : "regular"} />
-                  ))}
-                </span>
-                <span className="review-row-meta">Table {review.table} · {formatTime(review.createdAt)}</span>
-              </div>
-              {review.comment && <p className="review-row-comment">{review.comment}</p>}
-            </div>
-          ))}
         </div>
       </section>
     </div>

@@ -27,14 +27,6 @@ create table if not exists help_calls (
   created_at timestamptz not null default now()
 );
 
-create table if not exists reviews (
-  id serial primary key,
-  "table" text not null,
-  rating int not null,
-  comment text default '',
-  created_at timestamptz not null default now()
-);
-
 create index if not exists orders_table_idx on orders ("table");
 create index if not exists orders_status_idx on orders (status);
 create index if not exists orders_cleared_at_idx on orders (cleared_at);
